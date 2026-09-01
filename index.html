@@ -290,6 +290,22 @@
         <input type="number" id="consolidationMaxRangeAtrMult" value="2.0" step="0.1">
         <label>מרווח אישור פריצה (מכפיל ATR)</label>
         <input type="number" id="breakoutBufferAtrMult" value="0.2" step="0.05">
+        <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+          <span class="switch" style="display:inline-block;">
+            <input type="checkbox" id="requireCloseBreakout" checked>
+            <span class="slider"></span>
+          </span>
+          <span>דרוש סגירת נר לאישור פריצה (לא רק מחיר חי - פחות איתותי שווא, תגובה איטית יותר)</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+          <span class="switch" style="display:inline-block;">
+            <input type="checkbox" id="requireVolumeConfirmation">
+            <span class="slider"></span>
+          </span>
+          <span>דרוש אישור נפח מסחר בפריצה (⚠️ נתון לא אמין בזהב CFD - ראי הסבר)</span>
+        </label>
+        <label>מכפיל נפח נדרש (יחסית לממוצע 20 נרות)</label>
+        <input type="number" id="volumeConfirmMult" value="1.5" step="0.1">
         <label>קרבה לתמיכה/התנגדות שנחשבת "אזור" ($)</label>
         <input type="number" id="srProximityPts" value="3" step="0.5">
         <label>מרחק סטופ (מכפיל ATR)</label>
@@ -339,7 +355,8 @@ const DEFAULTS = {
   srProximityPts:3, atrStopMult:1.0, maxZoneAtrMult:15, overnightBuyPct:-0.0319, overnightSellPct:-0.0120, accountBalanceIls:1000,
   manualPriceOverride:null, manualPriceOverrideIls:null, manualMarginOverride:null, manualMarginOverrideIls:null,
   marginRatio:null, exchangeRateOverride:null,
-  consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2
+  consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
+  requireVolumeConfirmation:false, volumeConfirmMult:1.5
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULTS));
@@ -846,8 +863,23 @@ function checkConsolidationBreakout(direction){
   if(!isConsolidating) return false;
 
   const buffer = lastAtr * settings.breakoutBufferAtrMult;
-  if(direction==='up') return lastKnownClose!=null && lastKnownClose > rangeHigh + buffer;
-  return lastKnownClose!=null && lastKnownClose < rangeLow - buffer;
+  // Confirmation price: either the live price (faster, more prone to noise/false breakouts) or
+  // the last CLOSED candle's close (matches common professional practice — a close beyond the
+  // border, not just a wick/live-tick touch — slower to confirm but fewer false signals).
+  const confirmPrice = settings.requireCloseBreakout ? historyCache.closes[n-1] : lastKnownClose;
+
+  // Optional volume confirmation (professional best practice: breakout volume >= ~1.5x the
+  // 20-period average). Off by default — gold CFD/forex volume is typically unreliable tick
+  // volume, not real market volume, so this shouldn't be trusted blindly for this asset.
+  if(settings.requireVolumeConfirmation && historyCache.volumes){
+    const vols = historyCache.volumes;
+    const volLookback = Math.min(20, n-1);
+    const avgVol = vols.slice(n-1-volLookback, n-1).reduce((a,b)=>a+b,0) / (volLookback||1);
+    const breakoutVol = vols[n-1];
+    if(avgVol>0 && breakoutVol < avgVol*settings.volumeConfirmMult) return false;
+  }
+  if(direction==='up') return confirmPrice!=null && confirmPrice > rangeHigh + buffer;
+  return confirmPrice!=null && confirmPrice < rangeLow - buffer;
 }
 
 function getCurrentHourInTz(tz){
@@ -1341,6 +1373,9 @@ function fillSettingsForm(){
   document.getElementById('consolidationLookback').value = settings.consolidationLookback;
   document.getElementById('consolidationMaxRangeAtrMult').value = settings.consolidationMaxRangeAtrMult;
   document.getElementById('breakoutBufferAtrMult').value = settings.breakoutBufferAtrMult;
+  document.getElementById('requireCloseBreakout').checked = settings.requireCloseBreakout;
+  document.getElementById('requireVolumeConfirmation').checked = settings.requireVolumeConfirmation;
+  document.getElementById('volumeConfirmMult').value = settings.volumeConfirmMult;
   document.getElementById('srProximityPts').value = settings.srProximityPts;
   document.getElementById('atrStopMult').value = settings.atrStopMult;
   document.getElementById('maxZoneAtrMult').value = settings.maxZoneAtrMult;
@@ -1370,6 +1405,9 @@ function readSettingsForm(){
   settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||6;
   settings.consolidationMaxRangeAtrMult = parseFloat(document.getElementById('consolidationMaxRangeAtrMult').value)||2.0;
   settings.breakoutBufferAtrMult = parseFloat(document.getElementById('breakoutBufferAtrMult').value)||0.2;
+  settings.requireCloseBreakout = document.getElementById('requireCloseBreakout').checked;
+  settings.requireVolumeConfirmation = document.getElementById('requireVolumeConfirmation').checked;
+  settings.volumeConfirmMult = parseFloat(document.getElementById('volumeConfirmMult').value)||1.5;
   settings.srProximityPts = parseFloat(document.getElementById('srProximityPts').value)||3;
   settings.atrStopMult = parseFloat(document.getElementById('atrStopMult').value)||1.0;
   settings.maxZoneAtrMult = parseFloat(document.getElementById('maxZoneAtrMult').value)||8;
