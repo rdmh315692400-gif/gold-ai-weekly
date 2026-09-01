@@ -110,6 +110,34 @@
     <div class="view active" id="view-dashboard">
       <div id="banners"></div>
 
+      <div class="card" id="selfControlCard">
+        <h2>🎯 מדד שליטה עצמית</h2>
+        <div style="display:flex; justify-content:center;">
+          <svg id="selfControlGauge" viewBox="0 0 200 110" style="width:220px;"></svg>
+        </div>
+        <div id="selfControlScoreLabel" style="text-align:center; font-weight:700; font-size:14px; margin-top:4px;"></div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
+          <span style="color:var(--down);">בעלת חוסר שליטה עצמית</span>
+          <span style="color:var(--up);">בעלת שליטה עצמית</span>
+        </div>
+
+        <div id="selfControlDailyRow" style="display:none; border-top:1px solid var(--border); padding-top:10px; margin-top:12px;">
+          <div style="font-size:13px; margin-bottom:8px;">אין היום הסתברות קנייה - האם פתחת פוזיציה בכל זאת?</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn secondary" id="selfControlDailyNo" style="flex:1; border-color:var(--up); color:var(--up);">לא פתחתי ✓</button>
+            <button class="btn secondary" id="selfControlDailyYes" style="flex:1; border-color:var(--down); color:var(--down);">כן פתחתי ✗</button>
+          </div>
+        </div>
+
+        <div id="selfControlTradeRow" style="display:none; border-top:1px solid var(--border); padding-top:10px; margin-top:12px;">
+          <div style="font-size:13px; margin-bottom:8px;" id="selfControlTradeQuestion"></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn secondary" id="selfControlTradeYes" style="flex:1; border-color:var(--up); color:var(--up);">פעלתי לפי המערכת ✓</button>
+            <button class="btn secondary" id="selfControlTradeNo" style="flex:1; border-color:var(--down); color:var(--down);">סטיתי ✗</button>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="spreadCard">
         <h2>מרווח דינמי - עדכון שבועי</h2>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -201,6 +229,11 @@
       <div class="card" id="earlyCard" style="display:none; border-color:var(--gold-soft);">
         <div id="earlyMsg" style="font-size:16px; font-weight:700;"></div>
         <button id="resetPosBtn" class="btn secondary" style="margin-top:10px;">🔄 אפס מעקב פוזיציה (אם לא ביצעת בפועל)</button>
+      </div>
+
+      <div class="card" id="threeMindsCard" style="display:none;">
+        <h2>🧠 3 מוחות + מנוע הסתברות כניסה</h2>
+        <div id="threeMindsContent"></div>
       </div>
 
       <div class="card" id="simpleCard" style="border-color:var(--gold-soft);">
@@ -357,7 +390,8 @@ const DEFAULTS = {
   manualPriceOverride:null, manualPriceOverrideIls:null, manualMarginOverride:null, manualMarginOverrideIls:null,
   marginRatio:null, exchangeRateOverride:null,
   consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
-  requireVolumeConfirmation:false, volumeConfirmMult:1.5
+  requireVolumeConfirmation:false, volumeConfirmMult:1.5,
+  calibMinTrades:15
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULTS));
@@ -382,6 +416,8 @@ function updateLiveCandleRange(openPrice, livePrice){
   }
 }
 let lastKnownClose = null;
+let lastScoresArr = null; // full historical combined-score array, for the Entry Probability Engine's TP-vs-SL simulation
+let lastThreeMinds = null;
 let lastUsdIls = null;
 let lastSt = null;
 let lastCombinedScore = 0, lastResistance = null, lastSupport = null, lastAtr = null;
@@ -404,6 +440,7 @@ async function liveTick(){
       const legDir = lastCombinedScore >= settings.scoreThreshold ? 'up' : lastCombinedScore <= -settings.scoreThreshold ? 'down' : null;
       const mainAgrees = legDir!=null;
       monitorPosition(legDir, mainAgrees, live, lastR0);
+      renderSelfControlCard();
     }
   }catch(e){ console.warn('live tick failed', e); }
 }
@@ -663,6 +700,197 @@ function loadPosState(){
 function savePosState(p){
   try{ localStorage.setItem('goldai_position', JSON.stringify(p)); }catch(e){}
 }
+
+// Trade journal — logs the FULL forecast snapshot at entry (what each Mind said, why) and the
+// actual outcome at exit. This is the foundation for calibration: everything else derives from it.
+// Self-control log — tracks the user's own discipline: on no-signal days, did they trade
+// anyway? On entry/reversal events, did they follow the system's data or deviate?
+function loadSelfControlLog(){
+  try{ return JSON.parse(localStorage.getItem('goldai_selfControlLog')||'[]'); }
+  catch(e){ return []; }
+}
+function saveSelfControlLog(log){
+  try{ localStorage.setItem('goldai_selfControlLog', JSON.stringify(log.slice(-300))); }catch(e){}
+}
+function computeSelfControlScore(){
+  const log = loadSelfControlLog();
+  if(log.length===0) return null;
+  const good = log.filter(e=>e.good).length;
+  return (good/log.length)*100;
+}
+function drawSelfControlGauge(){
+  const svg = document.getElementById('selfControlGauge');
+  const score = computeSelfControlScore();
+  const label = document.getElementById('selfControlScoreLabel');
+  const cx=100, cy=100, r=80;
+  const pct = score==null ? 50 : score;
+  const angle = Math.PI - (pct/100)*Math.PI; // 100 -> angle 0 (right/green), 0 -> angle PI (left/red)
+  const needleX = cx + r*0.85*Math.cos(angle);
+  const needleY = cy - r*0.85*Math.sin(angle);
+  // arc path (semi-circle), split into red (left half) and green (right half) segments
+  const startRed = {x: cx-r, y: cy};
+  const midTop = {x: cx, y: cy-r};
+  const endGreen = {x: cx+r, y: cy};
+  svg.innerHTML = `
+    <path d="M ${startRed.x} ${startRed.y} A ${r} ${r} 0 0 1 ${midTop.x} ${midTop.y}" fill="none" stroke="#B03A2A" stroke-width="14" stroke-linecap="round"/>
+    <path d="M ${midTop.x} ${midTop.y} A ${r} ${r} 0 0 1 ${endGreen.x} ${endGreen.y}" fill="none" stroke="#3FB68B" stroke-width="14" stroke-linecap="round"/>
+    <line x1="${cx}" y1="${cy}" x2="${needleX}" y2="${needleY}" stroke="#fff" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="20" font-weight="700" fill="#C9A227">${score==null?'-':Math.round(score)+'%'}</text>
+  `;
+  label.textContent = score==null ? 'אין עדיין נתונים' : `ציון שליטה עצמית: ${Math.round(score)}/100`;
+}
+
+function renderSelfControlRows(){
+  const today = new Date().toISOString().slice(0,10);
+  const log = loadSelfControlLog();
+
+  // Daily row: only when there's no active entry candidate AND no open position AND not answered today
+  const pos = loadPosState();
+  const hasSignalToday = lastThreeMinds!=null; // an active forecast/entry candidate exists right now
+  const answeredToday = log.some(e=>e.type==='daily' && e.date===today);
+  const dailyRow = document.getElementById('selfControlDailyRow');
+  if(!hasSignalToday && !(pos && pos.open) && !answeredToday){
+    dailyRow.style.display = 'block';
+  } else {
+    dailyRow.style.display = 'none';
+  }
+
+  // Trade row: only when the most recent trade-log entry hasn't been answered yet
+  const tradeLog = loadTradeLog();
+  const lastTrade = tradeLog[tradeLog.length-1];
+  const tradeRow = document.getElementById('selfControlTradeRow');
+  if(lastTrade){
+    const alreadyAnswered = log.some(e=>e.type==='trade' && e.tradeId===lastTrade.id);
+    if(!alreadyAnswered){
+      const eventLabel = lastTrade.closedAt && lastTrade.outcome==='trend_reversal' ? 'בהיפוך מגמה שזוהה' : 'בפתיחת הפוזיציה האחרונה';
+      document.getElementById('selfControlTradeQuestion').textContent = `${eventLabel} (${lastTrade.entryDir==='up'?'LONG':'SHORT'}, ${fmt(lastTrade.entry)}) - האם פעלת לפי נתוני המערכת?`;
+      tradeRow.style.display = 'block';
+      tradeRow.dataset.tradeId = lastTrade.id;
+    } else {
+      tradeRow.style.display = 'none';
+    }
+  } else {
+    tradeRow.style.display = 'none';
+  }
+}
+
+function renderSelfControlCard(){
+  drawSelfControlGauge();
+  renderSelfControlRows();
+}
+
+function loadTradeLog(){
+  try{ return JSON.parse(localStorage.getItem('goldai_tradeLog')||'[]'); }
+  catch(e){ return []; }
+}
+function saveTradeLog(log){
+  try{ localStorage.setItem('goldai_tradeLog', JSON.stringify(log.slice(-200))); }catch(e){} // cap at 200 entries
+}
+function logTradeEntry(entryDir, entry, target, risk, regime, m1, m2, m3, cmp){
+  const log = loadTradeLog();
+  log.push({
+    id: Date.now(),
+    openedAt: Date.now(),
+    closedAt: null,
+    entryDir, entry, target, risk, regime,
+    m1conf: m1.confidence, epePTP: m1.epe.enough ? m1.epe.pTP : null, epeTotal: m1.epe.total,
+    m2score: m2.challengeScore, m2flagCount: m2.flags.length,
+    m3score: m3.score,
+    cmpScore: cmp.agreementScore,
+    outcome: null, actualPct: null,
+  });
+  saveTradeLog(log);
+}
+function logTradeExit(outcome, closePrice){
+  const log = loadTradeLog();
+  for(let i=log.length-1; i>=0; i--){
+    if(log[i].closedAt===null){
+      log[i].closedAt = Date.now();
+      log[i].outcome = outcome; // 'tp' | 'sl' | 'trend_reversal' | 'manual_reset'
+      log[i].actualPct = log[i].entryDir==='up'
+        ? (closePrice-log[i].entry)/log[i].entry*100
+        : (log[i].entry-closePrice)/log[i].entry*100;
+      break;
+    }
+  }
+  saveTradeLog(log);
+}
+
+// Calibration stats — computed from the trade journal. Requires a minimum sample before any of
+// this is treated as meaningful (see settings.calibMinTrades).
+function computeCalibrationStats(){
+  const log = loadTradeLog().filter(t=>t.closedAt!=null);
+  if(log.length===0) return {enough:false, count:0};
+  const isWin = t => t.outcome==='tp' || (t.actualPct!=null && t.actualPct>0);
+  const wins = log.filter(isWin).length;
+  const winRate = (wins/log.length)*100;
+  // Calibration: average predicted confidence vs actual win rate (ideally close to each other)
+  const withConf = log.filter(t=>t.m1conf!=null);
+  const avgPredictedConf = withConf.length ? withConf.reduce((s,t)=>s+t.m1conf,0)/withConf.length : null;
+  // Per-regime breakdown
+  const byRegime = {};
+  for(const t of log){
+    const r = t.regime||'unknown';
+    if(!byRegime[r]) byRegime[r] = {count:0, wins:0};
+    byRegime[r].count++;
+    if(isWin(t)) byRegime[r].wins++;
+  }
+  // Mind 2 accuracy: when it raised flags, did the trade fail more often?
+  const withFlags = log.filter(t=>t.m2flagCount>0);
+  const noFlags = log.filter(t=>t.m2flagCount===0);
+  const winRateWithFlags = withFlags.length ? (withFlags.filter(isWin).length/withFlags.length)*100 : null;
+  const winRateNoFlags = noFlags.length ? (noFlags.filter(isWin).length/noFlags.length)*100 : null;
+
+  // Mind 1 calibration curve: bucket trades by predicted confidence, check if higher confidence
+  // actually correlated with a higher real win rate (a real calibration check, not one average).
+  const buckets = [{label:'<60%', min:0, max:60}, {label:'60-75%', min:60, max:75}, {label:'>75%', min:75, max:101}];
+  const m1Buckets = buckets.map(b=>{
+    const inBucket = withConf.filter(t=>t.m1conf>=b.min && t.m1conf<b.max);
+    return { label:b.label, count:inBucket.length, winRate: inBucket.length ? (inBucket.filter(isWin).length/inBucket.length)*100 : null };
+  });
+
+  // Mind 3 accuracy: did a lower execution-quality score actually correlate with worse outcomes?
+  const withM3 = log.filter(t=>t.m3score!=null);
+  const lowM3 = withM3.filter(t=>t.m3score<50);
+  const highM3 = withM3.filter(t=>t.m3score>=50);
+  const winRateLowM3 = lowM3.length ? (lowM3.filter(isWin).length/lowM3.length)*100 : null;
+  const winRateHighM3 = highM3.length ? (highM3.filter(isWin).length/highM3.length)*100 : null;
+
+  // "All three minds wrong together": high confidence (M1), no flags (M2), good execution (M3),
+  // yet the trade still failed — the case worth watching most closely.
+  const highConfSetups = log.filter(t=>t.m1conf!=null && t.m1conf>=65 && t.m2flagCount===0 && t.m3score!=null && t.m3score>=65);
+  const tripleMiss = highConfSetups.filter(t=>!isWin(t));
+
+  return {
+    enough: log.length >= settings.calibMinTrades,
+    count: log.length, winRate, avgPredictedConf, byRegime,
+    winRateWithFlags, winRateNoFlags, withFlagsCount: withFlags.length, noFlagsCount: noFlags.length,
+    m1Buckets,
+    winRateLowM3, winRateHighM3, lowM3Count: lowM3.length, highM3Count: highM3.length,
+    tripleMissCount: tripleMiss.length, highConfSetupsCount: highConfSetups.length,
+  };
+}
+
+// Bounded, transparent recalibration: adjusts the 3-Minds comparison weights slightly based on
+// which mind's signal has historically correlated better with real outcomes — NEVER a black-box
+// retrain, always capped to a narrow range, and only runs once enough trades exist.
+function getCalibratedWeights(){
+  const stats = computeCalibrationStats();
+  const defaults = {w1:0.4, w3:0.3, w2inv:0.3};
+  if(!stats.enough) return defaults;
+  // If flagged trades clearly underperform, give Mind 2 more weight (up to a bounded ceiling); if
+  // it shows no signal, reduce it slightly — never below/above the safety bounds.
+  let w2inv = defaults.w2inv;
+  if(stats.winRateWithFlags!=null && stats.winRateNoFlags!=null && stats.withFlagsCount>=5 && stats.noFlagsCount>=5){
+    const gap = stats.winRateNoFlags - stats.winRateWithFlags; // positive = flags correlate with worse outcomes, as expected
+    if(gap > 15) w2inv = 0.4; // Mind 2 is proving useful — trust it more
+    else if(gap < -5) w2inv = 0.2; // Mind 2 isn't tracking real outcomes here — trust it less
+  }
+  const remaining = 1 - w2inv;
+  return { w1: remaining*0.57, w3: remaining*0.43, w2inv }; // keep w1:w3 ratio close to the original 0.4:0.3
+}
+
 function estimateTimeToTarget(entry, target){
   if(!lastAtr || lastAtr<=0) return null;
   const dist = Math.abs(target-entry);
@@ -720,18 +948,28 @@ function applyRecommendedBalance(amount){
   renderBanner(`יתרת החשבון עודכנה ל-₪${Math.round(amount)}. הפקידי סכום זה בפועל בפלוס500.`, 'warn');
 }
 
-function forcedClosureInfo(entry, risk, dirUp, oz){
+function forcedClosureInfo(entry, target, risk, dirUp, oz){
   oz = oz || 1;
   if(!lastUsdIls) return null;
   const notionalUsd = oz * entry;
   const maintenanceUsd = notionalUsd * settings.maintPct / 100;
   const balanceUsd = settings.accountBalanceIls / lastUsdIls;
   const forcedPrice = dirUp ? entry - (balanceUsd - maintenanceUsd)/oz : entry + (balanceUsd - maintenanceUsd)/oz;
-  const stopDistanceUsd = Math.abs(entry-risk) * oz;
-  const requiredBalanceUsd = maintenanceUsd + stopDistanceUsd;
+  // Use the FULL net loss (price distance + spread + commission + accumulated overnight financing
+  // over the estimated holding period) — not just the raw price-based stop distance — so the
+  // recommended capital genuinely covers the realistic worst case, not just the bare price move.
+  const pl = profitLossStats(entry, target, risk, dirUp, oz);
+  const fullLossUsd = Math.abs(pl.lossIls) / lastUsdIls;
+  const requiredBalanceUsd = maintenanceUsd + fullLossUsd;
+  // Professional 1-2% risk rule: recommended account size = full net loss at stop ÷ risk% —
+  // NOT a percentage of entry value or stop value, but of total account capital. This is a
+  // DIFFERENT number from requiredBalanceIls above (that one is about avoiding forced closure;
+  // this one is about proper position-sizing discipline).
+  const riskBasedCapitalIls = (fullLossUsd * lastUsdIls) / (settings.riskPercentPerTrade/100);
   return {
     forcedPrice,
     requiredBalanceIls: requiredBalanceUsd * lastUsdIls,
+    riskBasedCapitalIls,
     currentBalanceIls: settings.accountBalanceIls,
     safeFromForcedClosure: dirUp ? forcedPrice <= risk : forcedPrice >= risk,
   };
@@ -744,17 +982,246 @@ function plLine(entry, target, risk, dirUp, oz){
   const timeLine = t
     ? `<span style="color:var(--text-dim); font-size:12px;">זמן משוער ליעד: ~${fmt(t.estHours/24,1)} ימים (${t.chargedNights} לילות מימון) — מימון: ${pl.financingIls>=0?'+':''}₪${fmt(pl.financingIls,0)}</span><br>`
     : '';
-  const fc = forcedClosureInfo(entry, risk, dirUp, oz);
+  const fc = forcedClosureInfo(entry, target, risk, dirUp, oz);
   const forcedLossIls = fc ? profitLossStats(entry, target, fc.forcedPrice, dirUp, oz).lossIls : null;
   const fcLine = fc
     ? `<span style="color:var(--gold); font-size:12px;">שער סטופ (צפי הפסד): ${fmt(risk)}</span><br>` +
       `<span style="color:${fc.safeFromForcedClosure?'var(--text-dim)':'var(--down)'}; font-size:12px;">שער סגירה כפויה (${oz} אונקיות, יתרה ₪${fmt(fc.currentBalanceIls,0)}): ${fmt(fc.forcedPrice)}${fc.safeFromForcedClosure?'':' ⚠️ לפני הסטופ!'}</span><br>` +
       `<span style="color:var(--down); font-size:12px;">הפסד נטו בסגירה כפויה: -₪${fmt(Math.abs(forcedLossIls),0)}</span><br>` +
-      `<div style="display:flex; align-items:center; gap:8px; margin:4px 0;"><span style="color:var(--gold); font-size:13px; font-weight:700;">הון מומלץ להפקדה (${oz} אונקיות): ₪${fmt(fc.requiredBalanceIls,0)}</span>` +
-      `<button onclick="applyRecommendedBalance(${fc.requiredBalanceIls})" style="padding:4px 10px; border-radius:6px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-size:11px; cursor:pointer;">אשר סכום זה</button></div>`
+      `<div style="display:flex; align-items:center; gap:8px; margin:4px 0;"><span style="color:var(--gold); font-size:13px; font-weight:700;">מינימום למניעת סגירה כפויה (${oz} אונקיות): ₪${fmt(fc.requiredBalanceIls,0)}</span>` +
+      `<button onclick="applyRecommendedBalance(${fc.requiredBalanceIls})" style="padding:4px 10px; border-radius:6px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-size:11px; cursor:pointer;">אשר סכום זה</button></div>` +
+      `<span style="color:var(--gold); font-size:13px; font-weight:700;">הון מומלץ לפי ${fmt(settings.riskPercentPerTrade,1)}% סיכון (${oz} אונקיות): ₪${fmt(fc.riskBasedCapitalIls,0)}</span><br>` +
+      `<span style="color:var(--text-dim); font-size:11px;">= הפסד נטו מלא בסטופ ÷ % הסיכון - סך ההון הכולל שאמור להיות לך, לא רק המרווח</span><br>`
     : '';
   return timeLine + fcLine +
     `<span style="color:var(--down); font-size:13px;">הפסד נטו: -₪${fmt(Math.abs(pl.lossIls),0)} (${pl.lossPctMargin!=null?'-'+fmt(Math.abs(pl.lossPctMargin),1)+'% על העלות הכוללת':''})</span>`;
+}
+
+// ============================================================
+// 3 MINDS + ENTRY PROBABILITY ENGINE
+// ============================================================
+
+// Entry Probability Engine: for historical candles with a similar combined score, simulate
+// forward (using real highs/lows, not just closes) whether a target-sized move or a stop-sized
+// move happens FIRST, within a bounded horizon. This answers "P(TP before SL)", not just
+// "will price go up or down" — a materially different and more useful question.
+function computeEntryProbability(dirUp, targetPct, stopPct, maxHorizon){
+  if(!historyCache || !lastScoresArr) return {enough:false, total:0};
+  const band = settings.scoreBand;
+  const currentScore = lastScoresArr[lastScoresArr.length-1];
+  const closes=historyCache.closes, highs=historyCache.highs, lows=historyCache.lows;
+  let tpFirst=0, slFirst=0, reversalCount=0, neither=0, total=0;
+  for(let i=0;i<lastScoresArr.length-1;i++){
+    if(Math.abs(lastScoresArr[i]-currentScore)>band) continue;
+    const entryP = closes[i];
+    const tpPrice = dirUp ? entryP*(1+targetPct/100) : entryP*(1-targetPct/100);
+    const slPrice = dirUp ? entryP*(1-stopPct/100) : entryP*(1+stopPct/100);
+    // "Reversal" threshold: price continues beyond the SL by another full stop-distance —
+    // distinguishes a clean stop-out from a genuine trend reversal against the thesis.
+    const stopDist = Math.abs(entryP-slPrice);
+    const reversalPrice = dirUp ? slPrice-stopDist : slPrice+stopDist;
+    let resolved = null;
+    for(let h=1; h<=maxHorizon && i+h<closes.length; h++){
+      const hi=highs[i+h], lo=lows[i+h];
+      const hitTP = dirUp ? hi>=tpPrice : lo<=tpPrice;
+      const hitSL = dirUp ? lo<=slPrice : hi>=slPrice;
+      if(hitTP && hitSL){ resolved='ambiguous'; break; } // both hit same candle — can't order them, count conservatively
+      if(hitTP){ resolved='tp'; break; }
+      if(hitSL){
+        // Check the SAME and following candles (within horizon) for continuation past the reversal threshold
+        let wentFurther = (dirUp ? lo<=reversalPrice : hi>=reversalPrice);
+        for(let h2=h+1; !wentFurther && h2<=maxHorizon && i+h2<closes.length; h2++){
+          const hi2=highs[i+h2], lo2=lows[i+h2];
+          if(dirUp ? lo2<=reversalPrice : hi2>=reversalPrice) wentFurther = true;
+        }
+        resolved = wentFurther ? 'reversal' : 'sl';
+        break;
+      }
+    }
+    total++;
+    if(resolved==='tp') tpFirst++;
+    else if(resolved==='reversal') reversalCount++;
+    else if(resolved==='sl') slFirst++;
+    else neither++;
+  }
+  if(total < settings.minSamples) return {enough:false, total};
+  return { enough:true, total, pTP:(tpFirst/total)*100, pSL:(slFirst/total)*100, pReversal:(reversalCount/total)*100, pNeither:(neither/total)*100 };
+}
+
+// Mind 1 — Predictor: reuses the breakout detection + historical-similarity engine already built.
+// Packages it as an explicit forecast: direction, target, stop, probability, confidence.
+function runMind1Predictor(entry, target, risk, dirUp, r0, currentScore){
+  const targetPct = Math.abs(target-entry)/entry*100;
+  const stopPct = Math.abs(entry-risk)/entry*100;
+  const epe = computeEntryProbability(dirUp, targetPct, stopPct, 12);
+  // Multiple time horizons — short/medium/long — since "will TP happen before SL" can look very
+  // different depending on how much time you give the trade to play out.
+  const epeShort = computeEntryProbability(dirUp, targetPct, stopPct, 4);
+  const epeMedium = computeEntryProbability(dirUp, targetPct, stopPct, 8);
+  const epeLong = computeEntryProbability(dirUp, targetPct, stopPct, 20);
+  const histProb = (r0 && r0.enough) ? (dirUp ? r0.prob : r0.prob) : null; // r0.prob already matches r0.dir
+  return {
+    dir: dirUp ? 'up' : 'down',
+    target, risk,
+    confidence: epe.enough ? epe.pTP : (histProb!=null ? histProb : null),
+    epe, epeShort, epeMedium, epeLong,
+    scoreVal: currentScore,
+  };
+}
+
+// Mind 2 — Challenger: actively looks for reasons NOT to take the trade, using only real,
+// currently-available data (no invented order-flow/news signals).
+function runMind2Challenger(dirUp, entry, target, risk){
+  const flags = [];
+  if(lastRsi!=null){
+    if(dirUp && lastRsi>75) flags.push('RSI קיצוני (מעל 75) — סיכון תיקון/פריצת שווא');
+    if(!dirUp && lastRsi<25) flags.push('RSI קיצוני (מתחת ל-25) — סיכון תיקון/פריצת שווא');
+  }
+  if(lastAtr){
+    if(dirUp && lastResistance && lastResistance>entry && (lastResistance-entry)<lastAtr*1.5){
+      flags.push(`התנגדות קרובה (${fmt(lastResistance)}) עלולה לבלום את התנועה לפני היעד`);
+    }
+    if(!dirUp && lastSupport && lastSupport<entry && (entry-lastSupport)<lastAtr*1.5){
+      flags.push(`תמיכה קרובה (${fmt(lastSupport)}) עלולה לבלום את התנועה לפני היעד`);
+    }
+    const stopDist = Math.abs(entry-risk);
+    const spreadPctOfStop = stopDist>0 ? (settings.spreadCost/stopDist)*100 : 0;
+    if(spreadPctOfStop > 15) flags.push(`מרווח דינמי גבוה יחסית לסטופ (${fmt(spreadPctOfStop,0)}% ממנו) — עלות נכנסת מוקדם לתמונה`);
+    if(historyCache){
+      const n = historyCache.closes.length;
+      const lookback = settings.consolidationLookback;
+      if(n>lookback){
+        const priorClose = historyCache.closes[n-1-lookback];
+        const runSize = Math.abs(entry-priorClose);
+        if(runSize > lastAtr*3) flags.push('תנועה כבר גדולה (מעל 3×ATR) לפני האיתות — כניסה מאוחרת אפשרית, סיכון למיצוי המהלך');
+      }
+    }
+  }
+  return { flags, challengeScore: Math.min(100, flags.length*25) };
+}
+
+// Mind 3 — Broker/Execution simulator: formalizes the cost/margin/financing calculations already
+// built elsewhere into one Execution Quality Score (0-100).
+function runMind3BrokerSim(entry, target, risk, dirUp, oz){
+  oz = oz || 1;
+  let score = 100;
+  const reasons = [];
+  const targetDist = Math.abs(target-entry);
+  const spreadPctOfTarget = targetDist>0 ? (settings.spreadCost/targetDist)*100 : 100;
+  if(spreadPctOfTarget > 5){ score -= Math.min(30, spreadPctOfTarget); reasons.push(`מרווח דינמי ${fmt(spreadPctOfTarget,1)}% מהיעד`); }
+  const fc = forcedClosureInfo(entry, target, risk, dirUp, oz);
+  if(fc && !fc.safeFromForcedClosure){ score -= 40; reasons.push('סגירה כפויה עלולה לקרות לפני הסטופ ביתרה הנוכחית'); }
+  const pl = profitLossStats(entry, target, risk, dirUp, oz);
+  if(pl.financingIls!=null && pl.profitIls>0){
+    const burden = Math.abs(pl.financingIls)/pl.profitIls*100;
+    if(burden > 15){ score -= Math.min(20, burden/2); reasons.push(`מימון לילה צפוי לנגוס ${fmt(burden,0)}% מהרווח הצפוי`); }
+  }
+  score = Math.max(0, Math.round(score));
+  return { score, reasons };
+}
+
+// Comparison Engine — combines the three minds into one verdict.
+function runComparisonEngine(mind1, mind2, mind3){
+  const m1conf = mind1.confidence!=null ? mind1.confidence : 50; // neutral if unknown
+  const w = getCalibratedWeights();
+  const agreementScore = Math.round((m1conf*w.w1) + (mind3.score*w.w3) + ((100-mind2.challengeScore)*w.w2inv));
+  const hardBlock = mind3.score < 30 || mind2.challengeScore >= 75;
+  return { agreementScore, hardBlock, weights: w };
+}
+
+function renderCalibrationHtml(){
+  const stats = computeCalibrationStats();
+  if(stats.count===0) return `<div style="font-size:12px; color:var(--text-dim);">עדיין אין עסקאות ביומן - הכיול יופיע אחרי שתיסגר עסקה ראשונה.</div>`;
+  if(!stats.enough) return `<div style="font-size:12px; color:var(--text-dim);">${stats.count} עסקאות ביומן - צריך לפחות ${settings.calibMinTrades} כדי שהכיול העצמי יתחיל לפעול. (עדיין מציגה נתונים גולמיים למטה)</div>` + renderCalibrationBody(stats);
+  return renderCalibrationBody(stats);
+}
+function renderCalibrationBody(stats){
+  let html = `<div style="font-weight:700; color:var(--gold); margin-bottom:4px;">📊 יומן חיזויים וכיול עצמי (${stats.count} עסקאות סגורות)</div>`;
+  html += `<div style="font-size:12px;">אחוז הצלחה בפועל: <b style="color:${stats.winRate>=50?'var(--up)':'var(--down)'};">${fmt(stats.winRate,0)}%</b></div>`;
+  if(stats.avgPredictedConf!=null){
+    html += `<div style="font-size:12px;">ביטחון ממוצע שנחזה: ${fmt(stats.avgPredictedConf,0)}% ${Math.abs(stats.avgPredictedConf-stats.winRate)<=10?'✓ קרוב לתוצאה בפועל':'⚠️ פער מהתוצאה בפועל'}</div>`;
+  }
+  for(const regime in stats.byRegime){
+    const r = stats.byRegime[regime];
+    const label = regime==='consolidation' ? 'פריצת דשדוש' : regime==='channel' ? 'פריצת ערוץ מגמה' : regime;
+    html += `<div style="font-size:12px; color:var(--text-dim);">${label}: ${r.wins}/${r.count} הצלחות (${fmt(r.count?r.wins/r.count*100:0,0)}%)</div>`;
+  }
+  html += `<div style="font-weight:700; color:var(--gold); margin-top:8px;">דיוק לפי מוח</div>`;
+  if(stats.m1Buckets && stats.m1Buckets.some(b=>b.count>0)){
+    html += `<div style="font-size:12px;">🧠 מוח 1 (עקומת כיול — ביטחון שנחזה מול הצלחה בפועל):</div>`;
+    stats.m1Buckets.forEach(b=>{
+      if(b.count>0) html += `<div style="font-size:11px; color:var(--text-dim); margin-right:8px;">${b.label}: ${fmt(b.winRate,0)}% הצלחה בפועל (${b.count} עסקאות)</div>`;
+    });
+  }
+  if(stats.withFlagsCount>=5 && stats.noFlagsCount>=5){
+    html += `<div style="font-size:12px; margin-top:4px;">🛡️ מוח 2: כשהעלה דגלים → ${fmt(stats.winRateWithFlags,0)}% הצלחה | בלי דגלים → ${fmt(stats.winRateNoFlags,0)}% הצלחה</div>`;
+  }
+  if(stats.lowM3Count>=5 && stats.highM3Count>=5){
+    html += `<div style="font-size:12px; margin-top:4px;">🏦 מוח 3: ציון ביצוע נמוך (&lt;50) → ${fmt(stats.winRateLowM3,0)}% הצלחה | גבוה (≥50) → ${fmt(stats.winRateHighM3,0)}% הצלחה</div>`;
+  }
+  if(stats.highConfSetupsCount>0){
+    const pct = (stats.tripleMissCount/stats.highConfSetupsCount)*100;
+    html += `<div style="font-size:12px; margin-top:8px; color:${stats.tripleMissCount>0?'var(--down)':'var(--up)'};">⚠️ שלושת המוחות טעו יחד: ${stats.tripleMissCount}/${stats.highConfSetupsCount} מקרים בהם כל 3 המוחות הסכימו בביטחון גבוה (${fmt(pct,0)}%)</div>`;
+  }
+  return html;
+}
+
+function renderThreeMindsCard(){
+  const card = document.getElementById('threeMindsCard');
+  const content = document.getElementById('threeMindsContent');
+  const calibHtml = renderCalibrationHtml();
+  if(!lastThreeMinds){
+    const stats = computeCalibrationStats();
+    if(stats.count===0){ card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    content.innerHTML = `<div style="font-size:13px; color:var(--text-dim); margin-bottom:10px;">אין כרגע תחזית פעילה</div>` +
+      `<div style="border-top:1px solid var(--border); padding-top:10px;">${calibHtml}</div>`;
+    return;
+  }
+  const {m1, m2, m3, cmp, entryDir, entry, target, risk} = lastThreeMinds;
+  card.style.display = 'block';
+
+  const epeLine = m1.epe.enough
+    ? `TP לפני SL: <span style="color:var(--up); font-weight:700;">${fmt(m1.epe.pTP,1)}%</span> | SL (ללא המשך): <span style="color:var(--gold); font-weight:700;">${fmt(m1.epe.pSL,1)}%</span> | היפוך מגמה (המשך נגדי): <span style="color:var(--down); font-weight:700;">${fmt(m1.epe.pReversal,1)}%</span> | ללא הכרעה: ${fmt(m1.epe.pNeither,1)}% (מתוך ${m1.epe.total} מקרים דומים)`
+    : `אין עדיין מספיק מקרים היסטוריים דומים (${m1.epe.total}) לחישוב P(TP לפני SL) מהימן`;
+  const horizonLine = (m1.epeShort.enough || m1.epeMedium.enough || m1.epeLong.enough)
+    ? `<div style="font-size:11px; color:var(--text-dim); margin-top:4px;">לפי אופק זמן — קצר (4 נרות): ${m1.epeShort.enough?fmt(m1.epeShort.pTP,0)+'%':'-'} | בינוני (8): ${m1.epeMedium.enough?fmt(m1.epeMedium.pTP,0)+'%':'-'} | ארוך (20): ${m1.epeLong.enough?fmt(m1.epeLong.pTP,0)+'%':'-'}</div>`
+    : '';
+
+  const flagsHtml = m2.flags.length
+    ? m2.flags.map(f=>`<div style="color:var(--down); font-size:12px; margin-top:2px;">⚠️ ${f}</div>`).join('')
+    : `<div style="color:var(--up); font-size:12px;">✓ לא נמצאו דגלים אדומים</div>`;
+
+  const reasonsHtml = m3.reasons.length
+    ? m3.reasons.map(r=>`<div style="color:var(--down); font-size:12px; margin-top:2px;">• ${r}</div>`).join('')
+    : `<div style="color:var(--up); font-size:12px;">✓ תנאי ביצוע תקינים</div>`;
+
+  const verdictColor = cmp.hardBlock ? 'var(--down)' : cmp.agreementScore>=65 ? 'var(--up)' : 'var(--gold)';
+  const verdictText = cmp.hardBlock ? '🚫 NO TRADE — נחסם על ידי מוח 2/3' : cmp.agreementScore>=65 ? '✅ ENTRY מאושר' : '⚪ גבולי — שקלי בזהירות';
+
+  content.innerHTML = `
+    <div style="text-align:center; font-weight:700; font-size:16px; color:${verdictColor}; margin-bottom:10px;">${verdictText}</div>
+    <div style="text-align:center; margin-bottom:12px;">ציון הסכמה כולל: <b style="color:${verdictColor};">${cmp.agreementScore}/100</b></div>
+
+    <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:6px;">
+      <div style="font-weight:700; color:var(--gold); margin-bottom:4px;">🧠 מוח 1 — Predictor</div>
+      <div style="font-size:13px;">כיוון: ${entryDir==='up'?'🟢 LONG':'🔴 SHORT'} | כניסה: ${fmt(entry)} | יעד: ${fmt(target)} | סטופ: ${fmt(risk)}</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:4px;">${epeLine}</div>
+      ${horizonLine}
+    </div>
+
+    <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:var(--gold); margin-bottom:4px;">🛡️ מוח 2 — Challenger (ציון אתגר: ${m2.challengeScore}/100)</div>
+      ${flagsHtml}
+    </div>
+
+    <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:10px;">
+      <div style="font-weight:700; color:var(--gold); margin-bottom:4px;">🏦 מוח 3 — Broker Simulator (איכות ביצוע: ${m3.score}/100)</div>
+      ${reasonsHtml}
+    </div>
+    <div style="font-size:11px; color:var(--text-dim); margin-top:10px;">⚠️ מנוע הסתברות זה מבוסס על דמיון היסטורי בין נרות שבועיים, מדגם מוגבל - לא הוכח בבקטסט מקיף.</div>
+    <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:10px;">${calibHtml}</div>
+  `;
 }
 
 function monitorPosition(legDir, mainAgrees, lastClose, r0){
@@ -763,9 +1230,14 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 
   const probLine = (r0 && r0.prob!=null) ? `הסתברות P%: ${fmt(r0.prob,1)}%` : `הסתברות P%: אוספת עדיין נתונים`;
 
-  // Breakout up = new/starting UP trend after consolidation. Breakout down = new/starting DOWN trend.
-  const breakoutUp = checkConsolidationBreakout('up');
-  const breakoutDown = checkConsolidationBreakout('down');
+  // Breakout up = new/starting UP trend after consolidation OR a trend-channel breakout.
+  // Two independent professional-style calculations, either one can trigger.
+  const consolBreakoutUp = checkConsolidationBreakout('up');
+  const consolBreakoutDown = checkConsolidationBreakout('down');
+  const channelBreakoutUp = checkTrendChannelBreakout('up');
+  const channelBreakoutDown = checkTrendChannelBreakout('down');
+  const breakoutUp = consolBreakoutUp || channelBreakoutUp;
+  const breakoutDown = consolBreakoutDown || channelBreakoutDown;
   // The breakout only becomes a real "entry probability" when the P% engine doesn't actively
   // contradict it (enough samples AND pointing the opposite way) — matching real data, not just the pattern alone.
   const probContradictsUp = r0 && r0.enough && r0.dir==='down';
@@ -781,12 +1253,24 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
     if(entryDir){
       const n = historyCache.closes.length;
       const lookback = settings.consolidationLookback;
-      const startIdx = n - 1 - lookback, endIdx = n - 1;
-      const rangeHigh = Math.max(...historyCache.highs.slice(startIdx, endIdx));
-      const rangeLow = Math.min(...historyCache.lows.slice(startIdx, endIdx));
-      // Stop placed at the OTHER side of the consolidation range that was just broken —
-      // if price falls back into the range, the breakout has failed.
-      const structuralStop = entryDir==='up' ? rangeLow - lastAtr*0.2 : rangeHigh + lastAtr*0.2;
+      const isConsolTrigger = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
+      let structuralStop;
+      if(isConsolTrigger){
+        const startIdx = n - 1 - lookback, endIdx = n - 1;
+        const rangeHigh = Math.max(...historyCache.highs.slice(startIdx, endIdx));
+        const rangeLow = Math.min(...historyCache.lows.slice(startIdx, endIdx));
+        // Stop placed at the OTHER side of the consolidation range that was just broken —
+        // if price falls back into the range, the breakout has failed.
+        structuralStop = entryDir==='up' ? rangeLow - lastAtr*0.2 : rangeHigh + lastAtr*0.2;
+      } else {
+        // Channel-triggered entry: the stop belongs at the channel's OWN boundary (the line that
+        // was broken), not an unrelated flat range — a fall back below/above that line means the
+        // channel breakout has failed, which is the real invalidation point here.
+        const ch = computeTrendChannel();
+        const side = entryDir===(ch && ch.dirUp ? 'up':'down') ? 'opposite' : 'base';
+        structuralStop = ch ? channelLineValueAt(ch, n-1, side) + (entryDir==='up' ? -lastAtr*0.2 : lastAtr*0.2)
+          : (entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult);
+      }
       const stopDist = Math.abs(lastClose - structuralStop);
       let targetDist = entryDir==='up'
         ? (lastResistance && lastResistance>lastClose && (lastResistance-lastClose)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-lastClose : stopDist*2)
@@ -795,19 +1279,39 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const target = entryDir==='up' ? lastClose+targetDist : lastClose-targetDist;
       const risk = structuralStop;
 
+      // 3 Minds check: even a confirmed breakout can be vetoed by the Challenger or a poor
+      // execution-quality read from the Broker simulator.
+      const m1 = runMind1Predictor(lastClose, target, risk, entryDir==='up', r0, lastCombinedScore);
+      const m2 = runMind2Challenger(entryDir==='up', lastClose, target, risk);
+      const m3 = runMind3BrokerSim(lastClose, target, risk, entryDir==='up', settings.posSize||1);
+      const cmp = runComparisonEngine(m1, m2, m3);
+      lastThreeMinds = {m1, m2, m3, cmp, entryDir, entry:lastClose, target, risk};
+      if(cmp.hardBlock){
+        renderThreeMindsCard();
+        document.getElementById('earlyCard').style.display = 'none';
+        return;
+      }
+
       savePosState({open:true, dir:entryDir, entry:lastClose, target, risk});
-      const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה מדשדוש' : '🔴 SHORT (מכירה) — פריצה מדשדוש';
+      const isConsolBreakoutForLog = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
+      logTradeEntry(entryDir, lastClose, target, risk, isConsolBreakoutForLog?'consolidation':'channel', m1, m2, m3, cmp);
+      renderThreeMindsCard();
+      const isConsolBreakout = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
+      const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה' : '🔴 SHORT (מכירה) — פריצה';
+      const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות שבועיים` : `פריצת ערוץ מגמה (קו מגמה אלכסוני)`;
       document.getElementById('earlyMsg').innerHTML = `${dirLabel}<br>` +
         `<span style="color:var(--up)">כניסה בשער ${fmt(lastClose)}</span><br>` +
         `<span style="color:var(--gold)">יעד סגירה: ${fmt(target)}</span><br>` +
-        `<span style="color:var(--down)">סטופ (חזרה לתוך הדשדוש): ${fmt(risk)}</span><br>` +
-        `<span style="color:var(--text-dim); font-size:13px;">פריצה מטווח דשדוש של ${lookback} נרות שבועיים — P% תואם ולא סותר</span><br>` +
+        `<span style="color:var(--down)">סטופ: ${fmt(risk)}</span><br>` +
+        `<span style="color:var(--text-dim); font-size:13px;">${sourceLabel} — P% תואם ולא סותר</span><br>` +
         plLine(lastClose, target, risk, entryDir==='up') + `<br>` +
         `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
       earlyCard.style.display = 'block';
       notify('Gold AI - פתחי פוזיציה', `${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)} — פריצת דשדוש`);
     } else {
       earlyCard.style.display = 'none';
+      lastThreeMinds = null;
+      renderThreeMindsCard();
     }
     return;
   }
@@ -831,12 +1335,15 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
   const trendEnding = pos.dir==='up' ? breakoutDown : breakoutUp;
   if(hitTarget){
     notify('Gold AI - סגרי פוזיציה (יעד)', `הגעת ליעד בשער ${fmt(lastClose)} - זה הזמן לסגור ברווח`);
+    logTradeExit('tp', lastClose);
     savePosState({open:false});
   } else if(hitStop){
     notify('Gold AI - סגרי פוזיציה (סטופ)', `הגעת לסטופ בשער ${fmt(lastClose)} - זה הזמן לסגור ולהגביל הפסד`);
+    logTradeExit('sl', lastClose);
     savePosState({open:false});
   } else if(trendEnding){
     notify('Gold AI - סגרי פוזיציה (סוף מגמה)', `פריצת דשדוש בכיוון הפוך - המגמה נראית מסתיימת, מומלץ לסגור בשער ${fmt(lastClose)}`);
+    logTradeExit('trend_reversal', lastClose);
     savePosState({open:false});
   }
 }
@@ -847,6 +1354,70 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 // Core signal: a CONSOLIDATION (dashdush) — price range over the last N closed weekly candles
 // stayed tight relative to ATR — followed by a genuine BREAKOUT beyond that range. This is
 // "entry at the start of a trend after consolidation", not a reversal-tail pattern.
+// Trend channel: when the market is NOT consolidating (i.e., trending), draw a professional-style
+// channel — a regression line through the lows (uptrend) or highs (downtrend) of the recent
+// closed candles, plus a parallel line offset by the largest deviation on the opposite side.
+// Shared by the chart (visual) and the logic (breakout check) so they can never disagree.
+function computeTrendChannel(){
+  if(!historyCache || !lastAtr) return null;
+  const n = historyCache.closes.length;
+  const lookback = settings.consolidationLookback;
+  if(n < lookback + 1) return null;
+  const startIdx = n - 1 - lookback, endIdx = n - 1; // same window convention as consolidation
+  const len = endIdx - startIdx;
+  if(len < 2) return null;
+  // Regime gate: a trend channel only applies when the market is NOT in a consolidation range —
+  // matches the chart (horizontal lines OR diagonal channel, never both) and keeps the two
+  // breakout mechanisms mutually exclusive by market regime, as professional practice treats them.
+  const rangeHighCheck = Math.max(...historyCache.highs.slice(startIdx, endIdx));
+  const rangeLowCheck = Math.min(...historyCache.lows.slice(startIdx, endIdx));
+  if((rangeHighCheck-rangeLowCheck) <= lastAtr * settings.consolidationMaxRangeAtrMult) return null;
+  const dirUp = lastCombinedScore >= 0;
+  const xs = [], ys = [];
+  for(let i=startIdx; i<endIdx; i++){
+    xs.push(i-startIdx);
+    ys.push(dirUp ? historyCache.lows[i] : historyCache.highs[i]);
+  }
+  const nP = xs.length;
+  const sumX = xs.reduce((a,b)=>a+b,0), sumY = ys.reduce((a,b)=>a+b,0);
+  const sumXY = xs.reduce((s,x,idx)=>s+x*ys[idx],0);
+  const sumXX = xs.reduce((s,x)=>s+x*x,0);
+  const denom = (nP*sumXX - sumX*sumX) || 1;
+  const slope = (nP*sumXY - sumX*sumY) / denom;
+  const intercept = (sumY - slope*sumX) / nP;
+  let maxOffset = 0;
+  for(let i=startIdx; i<endIdx; i++){
+    const lineVal = slope*(i-startIdx) + intercept;
+    const opp = dirUp ? historyCache.highs[i] : historyCache.lows[i];
+    const dev = dirUp ? (opp-lineVal) : (lineVal-opp);
+    if(dev > maxOffset) maxOffset = dev;
+  }
+  return {slope, intercept, maxOffset, dirUp, startIdx, endIdx};
+}
+function channelLineValueAt(ch, idx, side){
+  const lv = ch.slope*(idx-ch.startIdx) + ch.intercept;
+  if(side==='base') return lv;
+  return ch.dirUp ? lv+ch.maxOffset : lv-ch.maxOffset;
+}
+function checkTrendChannelBreakout(direction){
+  const ch = computeTrendChannel();
+  if(!ch) return false;
+  const n = historyCache.closes.length;
+  const confirmPrice = settings.requireCloseBreakout ? historyCache.closes[n-1] : lastKnownClose;
+  if(confirmPrice==null) return false;
+  const buffer = lastAtr * settings.breakoutBufferAtrMult;
+  const baseAtTest = channelLineValueAt(ch, n-1, 'base');
+  const oppAtTest = channelLineValueAt(ch, n-1, 'opposite');
+  if(ch.dirUp){
+    if(direction==='down') return confirmPrice < baseAtTest - buffer; // breaks rising support = reversal down
+    if(direction==='up') return confirmPrice > oppAtTest + buffer;    // breaks rising resistance = acceleration up
+  } else {
+    if(direction==='up') return confirmPrice > baseAtTest + buffer;   // breaks falling resistance = reversal up
+    if(direction==='down') return confirmPrice < oppAtTest - buffer;  // breaks falling support = acceleration down
+  }
+  return false;
+}
+
 function checkConsolidationBreakout(direction){
   if(!historyCache || !lastAtr) return false;
   const n = historyCache.closes.length;
@@ -1041,7 +1612,7 @@ function renderChangeStats(data, lastClose, st, currentScore){
     sizes.forEach(oz=>{
       const plN = profitLossStats(barEntry, barTarget, barRisk, barDirUp, oz);
       const bN = plN.breakdown;
-      const fcN = forcedClosureInfo(barEntry, barRisk, barDirUp, oz);
+      const fcN = forcedClosureInfo(barEntry, barTarget, barRisk, barDirUp, oz);
       sizeHtml += `<div style="border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px;">` +
         `<div style="font-weight:700; margin-bottom:6px; color:var(--gold);">${oz} אונקיות</div>` +
         `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער כניסה</span><span>${fmt(barEntry)}</span></div>` +
@@ -1061,7 +1632,8 @@ function renderChangeStats(data, lastClose, st, currentScore){
         `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">מימון לילה</span><span style="color:${bN.financingIls>=0?'var(--up)':'var(--down)'};">${bN.financingIls>=0?'+':'-'}₪${fmt(Math.abs(bN.financingIls),0)}</span></div>` +
         (fcN ? `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער סגירה כפויה (יתרה נוכחית)</span><span style="color:${fcN.safeFromForcedClosure?'var(--text-dim)':'var(--down)'};">${fmt(fcN.forcedPrice)}${fcN.safeFromForcedClosure?'':' ⚠️'}</span></div>` +
         `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הפסד נטו בסגירה כפויה</span><span style="color:var(--down);">-₪${fmt(Math.abs(profitLossStats(barEntry, barTarget, fcN.forcedPrice, barDirUp, oz).lossIls),0)}</span></div>` +
-        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הון מומלץ</span><span style="color:var(--gold);">₪${fmt(fcN.requiredBalanceIls,0)}</span></div>` : '') +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">מינימום למניעת סגירה כפויה</span><span style="color:var(--gold);">₪${fmt(fcN.requiredBalanceIls,0)}</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הון מומלץ (${fmt(settings.riskPercentPerTrade,1)}% סיכון)</span><span style="color:var(--gold); font-weight:700;">₪${fmt(fcN.riskBasedCapitalIls,0)}</span></div>` : '') +
       `</div>`;
     });
     document.getElementById('capSizeTable').innerHTML = sizeHtml;
@@ -1094,12 +1666,13 @@ function drawMiniChart(data, livePrice, count=30){
   const n = Math.min(count+1, closes.length);
   const hSlice = highs.slice(-n), lSlice = lows.slice(-n), oSlice = opens.slice(-n), cSlice = closes.slice(-n);
 
-  // Consolidation range (same window/logic as checkConsolidationBreakout) for the overlay lines
+  // Consolidation range — EXACT SAME window as checkConsolidationBreakout: excludes the most
+  // recent closed candle (that candle is what's being tested for breaking OUT of this range).
   const lookback = settings.consolidationLookback;
   let rangeHigh = null, rangeLow = null, isConsolidating = false, breakoutDir = null;
   if(data.highs.length >= lookback + 1 && lastAtr){
     const fullN = data.closes.length;
-    const startIdx = fullN - lookback, endIdx = fullN;
+    const startIdx = fullN - 1 - lookback, endIdx = fullN - 1;
     rangeHigh = Math.max(...data.highs.slice(startIdx, endIdx));
     rangeLow = Math.min(...data.lows.slice(startIdx, endIdx));
     isConsolidating = (rangeHigh-rangeLow) <= lastAtr * settings.consolidationMaxRangeAtrMult;
@@ -1110,8 +1683,23 @@ function drawMiniChart(data, livePrice, count=30){
     }
   }
 
+  // Trend channel (used when NOT consolidating) — computed early so the vertical scale can include it
+  let trendCh = null;
+  if(!isConsolidating){
+    trendCh = computeTrendChannel();
+  }
+
   let maxV = Math.max(...hSlice, rangeHigh||0);
   let minV = Math.min(...lSlice, rangeLow!=null?rangeLow:Infinity);
+  if(trendCh){
+    const fullHistNforScale = data.closes.length;
+    const vals = [
+      channelLineValueAt(trendCh, trendCh.startIdx, 'base'), channelLineValueAt(trendCh, fullHistNforScale, 'base'),
+      channelLineValueAt(trendCh, trendCh.startIdx, 'opposite'), channelLineValueAt(trendCh, fullHistNforScale, 'opposite'),
+    ];
+    maxV = Math.max(maxV, ...vals);
+    minV = Math.min(minV, ...vals);
+  }
   const pad = (maxV-minV)*0.1 || 1;
   maxV += pad; minV -= pad;
   const scaleY = v => H - ((v-minV)/(maxV-minV))*H;
@@ -1154,10 +1742,14 @@ function drawMiniChart(data, livePrice, count=30){
     ctx.setLineDash([]);
   }
 
-  // consolidation range overlay
-  if(rangeHigh!=null){
+  // Range/channel overlay — ALWAYS shown: horizontal when consolidating, diagonal trend channel otherwise.
+  const fullHistN = data.closes.length;
+  const firstVisibleExtIdx = (fullHistN+1) - n;
+  const idxToX = (origIdx) => leftPad + (origIdx - firstVisibleExtIdx)*slotW + slotW/2;
+
+  if(rangeHigh!=null && (isConsolidating || breakoutDir)){
     const yHigh = scaleY(rangeHigh), yLow = scaleY(rangeLow);
-    ctx.strokeStyle = isConsolidating ? 'rgba(168,120,255,.7)' : 'rgba(168,120,255,.25)';
+    ctx.strokeStyle = 'rgba(168,120,255,.7)';
     ctx.setLineDash([5,3]); ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(leftPad,yHigh); ctx.lineTo(W,yHigh); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(leftPad,yLow); ctx.lineTo(W,yLow); ctx.stroke();
@@ -1166,9 +1758,33 @@ function drawMiniChart(data, livePrice, count=30){
     let label, labelColor;
     if(breakoutDir==='up'){ label='🟢 פריצה למעלה!'; labelColor='#3FB68B'; }
     else if(breakoutDir==='down'){ label='🔴 פריצה למטה!'; labelColor='#B03A2A'; }
-    else if(isConsolidating){ label='⚪ דשדוש'; labelColor='#A878FF'; }
-    else { label=''; labelColor='#9BA0AE'; }
-    if(label){ ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, yHigh-6))); }
+    else { label='⚪ דשדוש'; labelColor='#A878FF'; }
+    ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, yHigh-6)));
+  } else {
+    // Trending — draw a diagonal channel: a regression line through the lows (uptrend) or
+    // highs (downtrend) of the recent candles, plus a parallel line offset to the opposite side.
+    const ch = trendCh;
+    if(ch){
+      const xStart = idxToX(ch.startIdx);
+      const xEnd = idxToX(fullHistN);
+      const yBaseStart = scaleY(channelLineValueAt(ch, ch.startIdx, 'base'));
+      const yBaseEnd = scaleY(channelLineValueAt(ch, fullHistN, 'base'));
+      const yOppStart = scaleY(channelLineValueAt(ch, ch.startIdx, 'opposite'));
+      const yOppEnd = scaleY(channelLineValueAt(ch, fullHistN, 'opposite'));
+      ctx.strokeStyle = 'rgba(168,120,255,.7)';
+      ctx.setLineDash([5,3]); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(xStart,yBaseStart); ctx.lineTo(xEnd,yBaseEnd); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xStart,yOppStart); ctx.lineTo(xEnd,yOppEnd); ctx.stroke();
+      ctx.setLineDash([]);
+      const chBreakUp = checkTrendChannelBreakout('up');
+      const chBreakDown = checkTrendChannelBreakout('down');
+      ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
+      let label, labelColor;
+      if(chBreakUp){ label='🟢 פריצת ערוץ למעלה!'; labelColor='#3FB68B'; }
+      else if(chBreakDown){ label='🔴 פריצת ערוץ למטה!'; labelColor='#B03A2A'; }
+      else { label = ch.dirUp ? '📈 ערוץ מגמה עולה' : '📉 ערוץ מגמה יורד'; labelColor='#A878FF'; }
+      ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, Math.min(yBaseStart,yOppStart)-6)));
+    }
   }
 
   if(livePrice){
@@ -1209,7 +1825,7 @@ function renderSimpleMessage(r0, lastClose){
       const lookback = settings.consolidationLookback;
       let isConsolidating = false, edgePrice = null;
       if(historyCache && n >= lookback+1 && lastAtr){
-        const startIdx = n - lookback, endIdx = n;
+        const startIdx = n - 1 - lookback, endIdx = n - 1;
         const rangeHigh = Math.max(...historyCache.highs.slice(startIdx, endIdx));
         const rangeLow = Math.min(...historyCache.lows.slice(startIdx, endIdx));
         isConsolidating = (rangeHigh-rangeLow) <= lastAtr * settings.consolidationMaxRangeAtrMult;
@@ -1537,6 +2153,7 @@ async function refreshAll(){
       renderBanner('אין עדיין מספיק נתוני היסטוריה (בנרות שבועיים) - ה-P% עשוי להראות "אוסף נתונים" עד שיצטבר מספיק.', 'warn');
     }
     const {scores, lastResistance:lr, lastSupport:ls, atrArr, ema200Last, ema50Last, rsiLast} = computeScores(historyCache);
+    lastScoresArr = scores;
     const currentScore = scores[scores.length-1];
     const lastClose = live || closes[closes.length-1];
     if(settings.exchangeRateOverride!=null){
@@ -1559,6 +2176,7 @@ async function refreshAll(){
     const mainAgrees = legDir!=null;
     renderProbabilityMeter(st, currentScore, legDir, mainAgrees, r0);
     monitorPosition(legDir, mainAgrees, lastClose, r0);
+    renderSelfControlCard();
 
 
     document.getElementById('livePrice').textContent = '$'+fmt(lastClose);
@@ -1601,8 +2219,41 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   scheduleAutoRefresh();
 });
 document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+document.getElementById('selfControlDailyNo').addEventListener('click', ()=>{
+  const log = loadSelfControlLog();
+  log.push({date: new Date().toISOString().slice(0,10), type:'daily', good:true});
+  saveSelfControlLog(log);
+  renderSelfControlCard();
+});
+document.getElementById('selfControlDailyYes').addEventListener('click', ()=>{
+  const log = loadSelfControlLog();
+  log.push({date: new Date().toISOString().slice(0,10), type:'daily', good:false});
+  saveSelfControlLog(log);
+  renderSelfControlCard();
+});
+document.getElementById('selfControlTradeYes').addEventListener('click', ()=>{
+  const tradeId = document.getElementById('selfControlTradeRow').dataset.tradeId;
+  const log = loadSelfControlLog();
+  log.push({date: new Date().toISOString().slice(0,10), type:'trade', tradeId: parseInt(tradeId,10), good:true});
+  saveSelfControlLog(log);
+  renderSelfControlCard();
+});
+document.getElementById('selfControlTradeNo').addEventListener('click', ()=>{
+  const tradeId = document.getElementById('selfControlTradeRow').dataset.tradeId;
+  const log = loadSelfControlLog();
+  log.push({date: new Date().toISOString().slice(0,10), type:'trade', tradeId: parseInt(tradeId,10), good:false});
+  saveSelfControlLog(log);
+  renderSelfControlCard();
+});
+
 document.getElementById('resetPosBtn').addEventListener('click', ()=>{
+  const wasOpen = loadPosState();
+  if(wasOpen && wasOpen.open){
+    logTradeExit('manual_reset', lastKnownClose!=null ? lastKnownClose : wasOpen.entry);
+  }
   savePosState({open:false});
+  lastThreeMinds = null;
+  renderThreeMindsCard();
   renderBanner('מעקב הפוזיציה אופס - המערכת תחפש כניסה חדשה מאפס.', 'warn');
   refreshAll();
 });
@@ -1617,6 +2268,7 @@ document.getElementById('resetPosBtn').addEventListener('click', ()=>{
   fillSettingsForm();
   renderSpreadCard();
   renderManualPriceCard();
+  drawSelfControlGauge();
   await refreshAll();
   scheduleAutoRefresh();
 })();
