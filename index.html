@@ -1155,17 +1155,48 @@ function drawMiniChart(data, livePrice, count=30){
 
 function renderSimpleMessage(r0, lastClose){
   let simpleHtml = `מחיר נוכחי: <span style="color:var(--gold)">$${fmt(lastClose)}</span><br>`;
-  if(r0.dir==='up' || r0.dir==='down'){
-    const entry = lastClose;
-    const target = r0.dir==='up' ? entry*(1+r0.target/100) : entry*(1-r0.target/100);
-    const dirLabel = r0.dir==='up' ? '🟢 LONG (קנייה)' : '🔴 SHORT (מכירה)';
-    simpleHtml += `${dirLabel} — הסתברות ${fmt(r0.prob,1)}%<br>`;
-    simpleHtml += `<span style="color:var(--up)">פתחי פוזיציה בשער ${fmt(entry)}</span><br>`;
-    simpleHtml += `<span style="color:var(--down)">סגרי (יעד רווח) בשער ${fmt(target)}</span>`;
-  } else if(!r0.enough){
-    simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר שבועי`;
+  const scoreDir = lastCombinedScore >= 0 ? 'up' : 'down';
+  const breakoutUp = checkConsolidationBreakout('up');
+  const breakoutDown = checkConsolidationBreakout('down');
+  const probContradictsUp = r0 && r0.enough && r0.dir==='down';
+  const probContradictsDown = r0 && r0.enough && r0.dir==='up';
+  const confirmedNow = (breakoutUp && !probContradictsUp) || (breakoutDown && !probContradictsDown);
+
+  if(confirmedNow){
+    const dir = breakoutUp ? 'up' : 'down';
+    simpleHtml += `${dir==='up'?'🟢 LONG':'🔴 SHORT'} — פריצת דשדוש אושרה, ראי כרטיס פוזיציה למטה לפרטים מלאים`;
   } else {
-    simpleHtml += `⚪ כרגע אין הסתברות כניסה`;
+    // Not an active entry — show honest waiting status instead of a misleading "open now" message.
+    const pos = loadPosState();
+    if(pos && pos.open){
+      simpleHtml += `פוזיציה פתוחה כרגע (${pos.dir==='up'?'LONG':'SHORT'}) - ראי כרטיס פוזיציה למטה`;
+    } else if(lastResistance!=null || lastSupport!=null){
+      // Check if currently inside a consolidation range, and estimate time to the breakout edge
+      const n = historyCache ? historyCache.closes.length : 0;
+      const lookback = settings.consolidationLookback;
+      let isConsolidating = false, edgePrice = null;
+      if(historyCache && n >= lookback+1 && lastAtr){
+        const startIdx = n - lookback, endIdx = n;
+        const rangeHigh = Math.max(...historyCache.highs.slice(startIdx, endIdx));
+        const rangeLow = Math.min(...historyCache.lows.slice(startIdx, endIdx));
+        isConsolidating = (rangeHigh-rangeLow) <= lastAtr * settings.consolidationMaxRangeAtrMult;
+        if(isConsolidating){
+          const buffer = lastAtr * settings.breakoutBufferAtrMult;
+          edgePrice = scoreDir==='up' ? rangeHigh+buffer : rangeLow-buffer;
+        }
+      }
+      if(isConsolidating && edgePrice!=null){
+        const t = estimateTimeToTarget(lastClose, edgePrice);
+        simpleHtml += `⚪ בדשדוש כרגע - ממתינה לפריצה (${scoreDir==='up'?'LONG':'SHORT'} פוטנציאלי)`;
+        if(t) simpleHtml += `<br><span style="color:var(--text-dim); font-size:13px;">צפי זמן לכניסה: ~${fmt(t.estHours/24,1)} ימים (${(t.estHours/168).toFixed(1)} שבועות)</span>`;
+      } else {
+        simpleHtml += `⚪ אין דשדוש מזוהה כרגע - אין תחזית כניסה זמינה`;
+      }
+    } else if(!r0.enough){
+      simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר שבועי`;
+    } else {
+      simpleHtml += `⚪ כרגע אין הסתברות כניסה`;
+    }
   }
   document.getElementById('simpleMsg').innerHTML = simpleHtml;
 }
