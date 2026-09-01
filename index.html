@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gold AI">
+<meta name="theme-color" content="#12141A">
+<link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%20%22Gold%20AI%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A1%D7%AA%D7%91%D7%A8%D7%95%D7%AA%20%D7%9E%D7%A1%D7%97%D7%A8%22%2C%20%22short_name%22%3A%20%22Gold%20AI%22%2C%20%22start_url%22%3A%20%22./%22%2C%20%22scope%22%3A%20%22./%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%2312141A%22%2C%20%22theme_color%22%3A%20%22%2312141A%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22data%3Aimage/svg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8%2BCiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg%3D%3D%22%2C%20%22sizes%22%3A%20%22any%22%2C%20%22type%22%3A%20%22image/svg%2Bxml%22%2C%20%22purpose%22%3A%20%22any%20maskable%22%7D%5D%7D">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8+CiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg==">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8+CiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg==">
+<title>Gold AI Weekly Weekly — מערכת הסתברות מסחר</title>
+<style>
+  :root{
+    --bg:#12141A; --panel:#1B1E27; --panel-2:#20242F; --border:#2B2F3B;
+    --gold:#C9A227; --gold-soft:#8A7530;
+    --up:#3FB68B; --down:#E2604F; --neutral:#7A8090;
+    --text:#EDEEF2; --text-dim:#9BA0AE;
+    --mono:'SF Mono','Roboto Mono','Consolas',monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    height:100%; overflow-x:hidden;}
+  #app{display:flex;flex-direction:column;min-height:100vh;padding-bottom:70px;}
+
+  header{padding:18px 20px 14px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg); z-index:5;}
+  header .row{display:flex; justify-content:space-between; align-items:baseline;}
+  header h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.2px;}
+  header .price{font-family:var(--mono); font-size:15px; color:var(--gold);}
+  header .sub{color:var(--text-dim); font-size:12.5px; margin-top:3px;}
+
+  main{flex:1; padding:16px;}
+  .view{display:none;} .view.active{display:block;}
+
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px;}
+  .card h2{font-size:14px; margin:0 0 12px; color:var(--text-dim); font-weight:600;}
+
+  .horizon{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);}
+  .horizon:last-child{border-bottom:none;}
+  .horizon .h-name{font-size:13px; color:var(--text-dim); width:60px;}
+  .horizon .h-dir{font-size:14px; font-weight:700; flex:1;}
+  .horizon .h-dir.up{color:var(--up);} .horizon .h-dir.down{color:var(--down);} .horizon .h-dir.none{color:var(--neutral);}
+  .horizon .h-nums{text-align:left; font-family:var(--mono); font-size:12px;}
+  .horizon .h-nums .prob{font-size:15px; color:var(--gold); font-weight:700;}
+  .horizon .h-nums .tr{color:var(--text-dim); margin-top:2px;}
+  .trade-pill{display:inline-block; font-size:11px; padding:3px 8px; border-radius:20px; margin-top:4px;}
+  .trade-pill.yes{background:rgba(63,182,139,.15); color:var(--up);}
+  .trade-pill.no{background:rgba(122,128,144,.15); color:var(--neutral);}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat{background:var(--panel-2); border-radius:10px; padding:10px 12px;}
+  .stat .lbl{font-size:11px; color:var(--text-dim); margin-bottom:4px;}
+  .stat .val{font-family:var(--mono); font-size:14px;}
+
+  .msg{font-size:13px; color:var(--text-dim); line-height:1.5; padding:10px 0;}
+  .banner{border-radius:12px; padding:12px 14px; font-size:13px; margin-bottom:14px;}
+  .banner.warn{background:rgba(201,162,39,.12); border:1px solid rgba(201,162,39,.35); color:var(--gold);}
+  .banner.err{background:rgba(226,96,79,.12); border:1px solid rgba(226,96,79,.35); color:var(--down);}
+
+  button{font-family:inherit;}
+  .btn{width:100%; padding:13px; border-radius:10px; border:none; background:var(--gold); color:#1a1a1a;
+    font-weight:700; font-size:14px; cursor:pointer;}
+  .btn.secondary{background:var(--panel-2); color:var(--text); border:1px solid var(--border);}
+  .btn:active{opacity:.8;}
+
+  label{display:block; font-size:12.5px; color:var(--text-dim); margin:14px 0 6px;}
+  input[type=text],input[type=number],input[type=password]{
+    width:100%; padding:11px 12px; border-radius:9px; border:1px solid var(--border);
+    background:var(--panel-2); color:var(--text); font-size:14px; font-family:var(--mono);}
+  input:focus{outline:1px solid var(--gold);}
+
+  .layer-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+  .layer-row:last-child{border-bottom:none;}
+  .layer-row .lname{flex:1; font-size:13.5px;}
+  .layer-row .lname .tag{display:block; font-size:11px; color:var(--text-dim); margin-top:1px;}
+  .layer-row input[type=number]{width:64px; padding:7px; text-align:center;}
+  .switch{position:relative; width:42px; height:24px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--border); border-radius:24px; transition:.15s; cursor:pointer;}
+  .slider:before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.15s;}
+  input:checked + .slider{background:var(--gold-soft);}
+  input:checked + .slider:before{transform:translateX(-18px);}
+
+  .section-title{font-size:12px; text-transform:none; color:var(--gold); font-weight:700; margin:22px 0 8px;}
+
+  nav{position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--panel);
+    border-top:1px solid var(--border); padding:8px 0 calc(8px + env(safe-area-inset-bottom)); z-index:10;}
+  nav button{flex:1; background:none; border:none; color:var(--text-dim); font-size:12px; padding:6px 0; display:flex; flex-direction:column; align-items:center; gap:3px;}
+  nav button.active{color:var(--gold);}
+  nav .ic{font-size:19px;}
+
+  .footer-note{font-size:11px; color:var(--text-dim); text-align:center; padding:10px 4px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="row">
+      <h1>Gold AI Weekly</h1>
+      <div class="price" id="livePrice">—</div>
+    </div>
+    <div class="sub" id="statusLine">טוען...</div>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div id="banners"></div>
+
+      <div class="card" id="spreadCard">
+        <h2>מרווח דינמי - עדכון שבועי</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="number" id="dailySpreadInput" step="0.01" style="flex:1;">
+          <button class="btn" id="saveDailySpreadBtn" style="width:auto; padding:11px 18px;">שמור</button>
+        </div>
+        <div class="msg" id="spreadLastUpdated" style="margin-top:6px;"></div>
+        <div id="spreadDailyStatus" style="font-size:12px; font-weight:700; margin-top:4px;"></div>
+      </div>
+
+      <div class="card" id="manualPriceCard">
+        <h2>עדכון ידני - בטחונות ומחיר</h2>
+        <div class="msg" style="margin-bottom:8px;"><b>זה כיול חד-פעמי, לא הקפאת מחיר: את מזינה פה תמונת מצב אחת (שווי + בטחונות בפועל מהחשבון שלך), והמערכת גוזרת מזה את היחס בין השווי לבטחונות. מרגע זה השווי ממשיך להתעדכן חי מהשוק, והבטחונות מחושבים אוטומטית לפי אותו יחס × המחיר החי - בלי שתצטרכי לעדכן שוב, אלא רק אם פלוס500 משנים את תנאי המינוף.</b></div>
+        <label>בטחונות נדרשים ל-1 אונקיה ($)</label>
+        <input type="number" id="manualMarginInput" step="0.01" placeholder="למשל 29.57">
+        <label>אותם בטחונות ב-₪</label>
+        <input type="number" id="manualMarginIlsInput" step="0.01" placeholder="למשל 88.39">
+        <label>שווי אונקיית זהב אחת ($)</label>
+        <input type="number" id="manualPriceInput" step="0.01" placeholder="למשל 4435.29">
+        <label>אותו שווי ב-₪</label>
+        <input type="number" id="manualPriceIlsInput" step="0.01" placeholder="למשל 13258.41">
+        <button class="btn" id="saveManualPriceBtn" style="margin-top:10px;">שמור</button>
+        <div class="msg" id="manualPriceStatus" style="margin-top:6px;"></div>
+        <div id="manualPriceDailyStatus" style="font-size:12px; font-weight:700; margin-top:4px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>שינויי אחוזים</h2>
+        <div class="grid2">
+          <div class="stat"><div class="lbl">שינוי משבוע קודם</div><div class="val" id="chgDaily">-</div></div>
+          <div class="stat"><div class="lbl">שינוי בשבוע הנוכחי</div><div class="val" id="chgCandle">-</div></div>
+        </div>
+        <div class="stat" style="margin-top:10px;"><div class="lbl">צפי שינוי מכניסה עד סגירה שבועית (P%)</div><div class="val" id="chgExpected">-</div><div class="lbl" id="chgExpectedPrices" style="margin-top:4px;"></div></div>
+
+        <div style="margin-top:14px;">
+          <div class="lbl" style="margin-bottom:4px;">1. סרגל מחיר — כניסה במרכז</div>
+          <div style="position:relative; height:26px; border-radius:8px; overflow:hidden; background:rgba(122,128,144,.2); direction:ltr;">
+            <div id="tgGreenZone" style="position:absolute; top:0; bottom:0; background:rgba(63,182,139,.35);"></div>
+            <div id="tgRedZone" style="position:absolute; top:0; bottom:0; background:rgba(226,96,79,.35);"></div>
+            <div id="tgEntryMark" style="position:absolute; top:0; bottom:0; width:2px; background:var(--gold);"></div>
+            <div id="tgNowMark" style="position:absolute; top:0; bottom:0; width:2px; background:#fff;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:3px; direction:ltr;">
+            <span id="tgLeftEdgeLabel" style="color:var(--down);">סטופ</span>
+            <span id="tgRightEdgeLabel" style="color:var(--up);">יעד</span>
+          </div>
+          <div id="tgLabels" style="margin-top:8px;"></div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="lbl" style="margin-bottom:4px;">2. סרגל היפוך מגמה בלבד (לא תלוי מחיר/יעד)</div>
+          <div style="position:relative; height:26px; border-radius:8px; overflow:hidden; display:flex; direction:ltr;">
+            <div style="flex:1; background:rgba(63,182,139,.35);"></div>
+            <div style="flex:1; background:rgba(226,96,79,.35);"></div>
+            <div id="revMark" style="position:absolute; top:0; bottom:0; width:3px; background:#fff; left:25%;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:3px; direction:ltr;">
+            <span style="color:var(--up);">תוך מגמה</span>
+            <span style="color:var(--down);">היפוך מגמה</span>
+          </div>
+          <div id="revLabel" class="msg" style="margin-top:4px;">מבוסס על פריצת דשדוש בכיוון הפוך לפוזיציה - גם אם המחיר עדיין בטווח הירוק בסרגל 1.</div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="lbl" style="margin-bottom:4px;">3. סרגל כדאיות המשך החזקה (עלויות מול פוטנציאל)</div>
+          <div style="position:relative; height:26px; border-radius:8px; overflow:hidden; background:linear-gradient(90deg, rgba(226,96,79,.35), rgba(122,128,144,.15), rgba(63,182,139,.35)); direction:ltr;">
+            <div id="worthMark" style="position:absolute; top:0; bottom:0; width:3px; background:#fff;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:3px; direction:ltr;">
+            <span style="color:var(--down);">סגירת פוזיציה</span>
+            <span style="color:var(--up);">המשך החזקה</span>
+          </div>
+          <div id="worthLabel" class="msg" style="margin-top:4px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>רווח/הפסד צפוי בנר שבועי (P%) - לפי גודל פוזיציה</h2>
+        <div id="capSizeTable"></div>
+
+      <div class="card" style="padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 style="margin:0;">נר שבועי — זהב</h2>
+          <button id="chartZoomBtn" class="btn secondary" style="width:auto; padding:6px 14px; font-size:12px;">🔍 הגדל</button>
+        </div>
+        <canvas id="miniChart" width="320" height="150" style="width:100%; height:150px; display:block;"></canvas>
+      </div>
+
+      <div class="card" id="earlyCard" style="display:none; border-color:var(--gold-soft);">
+        <div id="earlyMsg" style="font-size:16px; font-weight:700;"></div>
+      </div>
+
+      <div class="card" id="simpleCard" style="border-color:var(--gold-soft);">
+        <div id="simpleMsg" style="font-size:17px; font-weight:700; line-height:1.9;">טוענת...</div>
+      </div>
+
+      <div class="card">
+        <h2>מד הסתברות כניסה</h2>
+        <div style="position:relative; height:34px; border-radius:8px; overflow:hidden; background:rgba(122,128,144,.2); direction:ltr;">
+          <div id="pmFill" style="height:100%; width:0%; background:var(--neutral); transition:width .3s, background .3s;"></div>
+          <div id="pmCutoff" style="position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,.5);"></div>
+        </div>
+        <div style="position:relative; height:16px; margin-top:2px; direction:ltr;">
+          <div id="pmLabel" style="position:absolute; top:-38px; transform:translateX(-50%); font-family:var(--mono); font-size:13px; font-weight:700; color:var(--gold); white-space:nowrap;">0%</div>
+        </div>
+        <div class="msg" style="display:flex; justify-content:space-between; margin-top:2px; direction:ltr; font-family:var(--mono);">
+          <span>0%</span><span>50%</span><span>100%</span>
+        </div>
+        <div class="msg" id="pmExplain">משלב: ציון 5 השכבות + מנוע P% + אישור תבנית בנר</div>
+        <div class="msg" id="pmTimeToTarget" style="color:var(--gold); margin-top:4px;"></div>
+      </div>
+
+      <button class="btn secondary" id="refreshBtn">רענן נתונים עכשיו</button>
+      <div class="footer-note">הסתברות סטטיסטית מבוססת-עבר על נכס זה בלבד. לא ייעוץ השקעות ולא ערבות לתוצאה.</div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+
+      <div class="section-title">חיבור נתונים</div>
+      <div class="card">
+        <label>Twelve Data API Key</label>
+        <input type="password" id="apiKey" placeholder="הדביקי כאן את המפתח שלך">
+        <div class="msg">הרשמה חינמית ב-twelvedata.com נותנת מפתח עם היסטוריית מחירים. בלי מפתח, האפליקציה לא יכולה למשוך נתונים.</div>
+        <label>סימבול</label>
+        <input type="text" id="symbol" value="XAU/USD">
+        <label>אזור זמן (למספר השעות של גבולות הנר)</label>
+        <input type="text" id="timezone" value="Asia/Jerusalem">
+        <label>תדירות רענון אוטומטי (דקות)</label>
+        <input type="number" id="refreshMinutes" value="15" min="1">
+      </div>
+
+      <div class="section-title">שכבות חיזוי (הפעלה/כיבוי ומשקל)</div>
+      <div class="card">
+        <div id="layersList"></div>
+        <div class="msg">משקל = מכפיל לתרומת השכבה לציון הכולל. אפשר לכבות שכבה לגמרי, או להגביר/להחליש את השפעתה.</div>
+      </div>
+
+      <div class="section-title">מנוע ההסתברות</div>
+      <div class="card">
+        <label>רוחב טווח דמיון בין ציונים (Score Band)</label>
+        <input type="number" id="scoreBand" value="2.5" step="0.1">
+        <label>מקסימום דגימות היסטוריות שמורות</label>
+        <input type="number" id="maxSamples" value="300">
+        <label>מינימום דגימות נדרש כדי לסמוך על טווח</label>
+        <input type="number" id="minSamples" value="20">
+        <label>מינימום יתרון סטטיסטי (Edge %) נדרש לעסקה</label>
+        <input type="number" id="minEdge" value="0.15" step="0.05">
+        <label>הסתברות מינימלית נדרשת לעסקה (%)</label>
+        <input type="number" id="minProb" value="55">
+      </div>
+
+      <div class="section-title">טווח זמן (בנרות) — הסתברות מותאמת אך ורק לנר שבועי</div>
+      <div class="card">
+        <label>טווח (השבוע הבא — לא ניתן לשינוי, זו כל התחזית)</label>
+        <input type="number" id="barsH1" value="1" disabled>
+      </div>
+
+      <div class="section-title">Plus500 - מרווח, מינוף, מרווח דינמי</div>
+      <div class="card">
+        <label>גודל פוזיציה (אונקיות)</label>
+        <input type="number" id="posSize" value="1" step="0.1">
+        <label>מינוף (1:X)</label>
+        <input type="number" id="leverage" value="150">
+        <label>מרווח דינמי משוער ($)</label>
+        <input type="number" id="spreadCost" value="0.88" step="0.01">
+        <label>עמלת פתיחה+סגירה משוער ($, ברוב ה-CFD כלול במרווח הדינמי - 0 כברירת מחדל)</label>
+        <input type="number" id="commissionPerTrade" value="0" step="0.01">
+        <label>בטחונות תחזוקה (%)</label>
+        <input type="number" id="maintPct" value="0.33" step="0.01">
+        <label>אחוז סיכון מומלץ לעסקה מתוך ההון (%)</label>
+        <input type="number" id="riskPercentPerTrade" value="1" step="0.5">
+        <label>סף ציון משולב לאישור כניסה (±)</label>
+        <input type="number" id="scoreThreshold" value="5" step="0.5">
+        <label>נרות אחורה לזיהוי דשדוש (Consolidation)</label>
+        <input type="number" id="consolidationLookback" value="6" step="1">
+        <label>טווח מקסימלי שנחשב דשדוש (מכפיל ATR)</label>
+        <input type="number" id="consolidationMaxRangeAtrMult" value="2.0" step="0.1">
+        <label>מרווח אישור פריצה (מכפיל ATR)</label>
+        <input type="number" id="breakoutBufferAtrMult" value="0.2" step="0.05">
+        <label>קרבה לתמיכה/התנגדות שנחשבת "אזור" ($)</label>
+        <input type="number" id="srProximityPts" value="3" step="0.5">
+        <label>מרחק סטופ (מכפיל ATR)</label>
+        <input type="number" id="atrStopMult" value="1.0" step="0.1">
+        <label>מרחק מקסימלי סביר לאזור כניסה (מכפיל ATR שבועי)</label>
+        <input type="number" id="maxZoneAtrMult" value="15" step="0.5">
+        <label>מימון לילה - קניה (%, ב-00:00)</label>
+        <input type="number" id="overnightBuyPct" value="-0.0319" step="0.0001">
+        <label>מימון לילה - מכירה (%, ב-00:00)</label>
+        <input type="number" id="overnightSellPct" value="-0.0120" step="0.0001">
+        <label>יתרת חשבון נוכחית (₪) - לחישוב סגירה כפויה</label>
+        <input type="number" id="accountBalanceIls" value="1000" step="10">
+      </div>
+
+      <button class="btn" id="saveBtn">שמור הגדרות ורענן</button>
+      <div class="footer-note">ההגדרות נשמרות באפליקציה עצמה ונטענות מחדש בכל פעם שתיכנסי.</div>
+    </div>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" data-view="dashboard"><span class="ic">📊</span>דשבורד</button>
+    <button class="nav-btn" data-view="settings"><span class="ic">⚙️</span>הגדרות</button>
+  </nav>
+</div>
+
+<script>
+// ============================================================
+// DEFAULT LAYERS (the "add/remove prediction settings" list)
+// ============================================================
+const DEFAULT_LAYERS = [
+  {key:'trend',       label:'מגמה (EMA 20/50/200)', enabled:true, weight:1, available:true},
+  {key:'momentum',    label:'מומנטום (RSI + MACD)',  enabled:true, weight:1, available:true},
+  {key:'volume',      label:'נפח מסחר',              enabled:true, weight:1, available:true, tag:'ב-CFD זה לרוב Tick Volume, לא מחזור השוק האמיתי'},
+  {key:'priceAction', label:'Price Action (בליעות/פריצות)', enabled:true, weight:1, available:true},
+  {key:'sr',          label:'תמיכה / התנגדות',        enabled:true, weight:1, available:true},
+  {key:'macro',       label:'מאקרו (דולר/ריבית)',     enabled:false, weight:1, available:false, tag:'דורש מקור נתונים נוסף - לא מחובר בגרסה זו'},
+  {key:'crossasset',  label:'קשר בין נכסים (S&P500)', enabled:false, weight:1, available:false, tag:'דורש מקור נתונים נוסף - לא מחובר בגרסה זו'},
+];
+
+const DEFAULTS = {
+  apiKey:'', symbol:'XAU/USD', interval:'4h', refreshMinutes:15,
+  timezone:'Asia/Jerusalem', candleBoundaryHours:[1,5,9,13,17,21],
+  layers: DEFAULT_LAYERS,
+  scoreBand:2.5, maxSamples:300, minSamples:20, minEdge:0.15, minProb:55,
+  barsH1:1,
+  posSize:1, leverage:150, spreadCost:0.88, commissionPerTrade:0, maintPct:0.33, scoreThreshold:5, riskPercentPerTrade:1,
+  srProximityPts:3, atrStopMult:1.0, maxZoneAtrMult:15, overnightBuyPct:-0.0319, overnightSellPct:-0.0120, accountBalanceIls:1000,
+  manualPriceOverride:null, manualPriceOverrideIls:null, manualMarginOverride:null, manualMarginOverrideIls:null,
+  marginRatio:null, exchangeRateOverride:null,
+  consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2
+};
+
+let settings = JSON.parse(JSON.stringify(DEFAULTS));
+let historyCache = null; // {closes[], highs[], lows[], volumes[]}
+let refreshTimer = null;
+let liveTickTimer = null;
+let lastR0 = null;
+let chartZoomed = false;
+// Persistent tracking of the CURRENT still-forming week's true high/low, accumulated across
+// every price tick (not recalculated fresh each draw) — so the live candle keeps its wick even
+// if price already pulled back from an earlier high/low reached earlier in the week.
+let liveCandleOpenRef = null, liveCandleHigh = null, liveCandleLow = null;
+function updateLiveCandleRange(openPrice, livePrice){
+  if(liveCandleOpenRef !== openPrice){
+    // a new week started (the reference open changed) — reset tracking
+    liveCandleOpenRef = openPrice;
+    liveCandleHigh = Math.max(openPrice, livePrice);
+    liveCandleLow = Math.min(openPrice, livePrice);
+  } else {
+    liveCandleHigh = Math.max(liveCandleHigh, livePrice);
+    liveCandleLow = Math.min(liveCandleLow, livePrice);
+  }
+}
+let lastKnownClose = null;
+let lastUsdIls = null;
+let lastSt = null;
+let lastCombinedScore = 0, lastResistance = null, lastSupport = null, lastAtr = null;
+let lastEma200 = null, lastEma50 = null, lastRsi = null;
+
+async function liveTick(){
+  if(!settings.apiKey || !historyCache) return;
+  try{
+    let live = await fetchQuote();
+    if(settings.exchangeRateOverride!=null){
+      lastUsdIls = settings.exchangeRateOverride; // calibrated once, applied to the live price continuously
+    }
+    if(live){
+      document.getElementById('livePrice').textContent = '$'+fmt(live);
+      drawMiniChart(historyCache, live, chartZoomed ? 5 : 30);
+      if(lastR0) renderSimpleMessage(lastR0, live);
+      if(lastSt) renderChangeStats(historyCache, live, lastSt, lastCombinedScore);
+      lastKnownClose = live;
+
+      const legDir = lastCombinedScore >= settings.scoreThreshold ? 'up' : lastCombinedScore <= -settings.scoreThreshold ? 'down' : null;
+      const mainAgrees = legDir!=null;
+      monitorPosition(legDir, mainAgrees, live, lastR0);
+    }
+  }catch(e){ console.warn('live tick failed', e); }
+}
+
+// ============================================================
+// PERSISTENCE (window.storage)
+// ============================================================
+async function loadSettings(){
+  try{
+    const raw = localStorage.getItem('goldai_settings');
+    if(raw){
+      const loaded = JSON.parse(raw);
+      settings = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), loaded);
+      if(loaded.layers){
+        const merged = DEFAULT_LAYERS.map(dl=>{
+          const found = loaded.layers.find(l=>l.key===dl.key);
+          return found ? Object.assign({}, dl, {enabled:found.enabled, weight:found.weight}) : dl;
+        });
+        settings.layers = merged;
+      }
+    }
+  }catch(e){ console.error('load failed', e); }
+}
+async function saveSettings(){
+  try{ localStorage.setItem('goldai_settings', JSON.stringify(settings)); }
+  catch(e){ console.error('save failed', e); renderBanner('לא ניתן לשמור הגדרות בדפדפן הזה (אולי מצב פרטי/גלישה אנונימית).', 'err'); }
+}
+
+// ============================================================
+// INDICATOR MATH
+// ============================================================
+function ema(arr, period){
+  const k = 2/(period+1); const out = new Array(arr.length).fill(null);
+  let prev = null;
+  for(let i=0;i<arr.length;i++){
+    if(arr[i]==null){ out[i]=prev; continue; }
+    prev = prev==null ? arr[i] : arr[i]*k + prev*(1-k);
+    out[i]=prev;
+  }
+  return out;
+}
+function sma(arr, period){
+  const out = new Array(arr.length).fill(null);
+  for(let i=0;i<arr.length;i++){
+    if(i<period-1) continue;
+    let s=0; for(let j=i-period+1;j<=i;j++) s+=arr[j];
+    out[i]=s/period;
+  }
+  return out;
+}
+function rsi(closes, period){
+  const out = new Array(closes.length).fill(null);
+  let gains=0, losses=0;
+  for(let i=1;i<closes.length;i++){
+    const d = closes[i]-closes[i-1];
+    const g = d>0?d:0, l = d<0?-d:0;
+    if(i<=period){ gains+=g; losses+=l; if(i===period){ const rs=(gains/period)/((losses/period)||1e-9); out[i]=100-100/(1+rs);} continue; }
+    gains = (gains*(period-1)+g)/period;
+    losses = (losses*(period-1)+l)/period;
+    const rs = gains/(losses||1e-9);
+    out[i]=100-100/(1+rs);
+  }
+  return out;
+}
+function macd(closes, fast=12, slow=26, signal=9){
+  const ef = ema(closes, fast), es = ema(closes, slow);
+  const macdLine = closes.map((_,i)=> (ef[i]!=null && es[i]!=null) ? ef[i]-es[i] : null);
+  const cleaned = macdLine.map(v=>v==null?0:v);
+  const sig = ema(cleaned, signal);
+  return {macdLine, signal:sig};
+}
+function atr(highs, lows, closes, period=14){
+  const tr = highs.map((h,i)=>{
+    if(i===0) return h-lows[i];
+    return Math.max(h-lows[i], Math.abs(h-closes[i-1]), Math.abs(lows[i]-closes[i-1]));
+  });
+  return ema(tr, period);
+}
+function pivotHighLow(highs, lows, lookback){
+  const ph = new Array(highs.length).fill(null), pl = new Array(lows.length).fill(null);
+  for(let i=lookback;i<highs.length-lookback;i++){
+    let isHigh=true, isLow=true;
+    for(let j=i-lookback;j<=i+lookback;j++){
+      if(j===i) continue;
+      if(highs[j]>=highs[i]) isHigh=false;
+      if(lows[j]<=lows[i]) isLow=false;
+    }
+    if(isHigh) ph[i]=highs[i];
+    if(isLow) pl[i]=lows[i];
+  }
+  return {ph, pl};
+}
+
+// ============================================================
+// SCORE ENGINE (mirrors the Pine Script layers)
+// ============================================================
+function computeScores(data){
+  const {closes, highs, lows, opens, volumes} = data;
+  const n = closes.length;
+  const ema20=ema(closes,20), ema50=ema(closes,50), ema200=ema(closes,200);
+  const rsiArr = rsi(closes,14);
+  const {macdLine, signal} = macd(closes);
+  const volAvg = sma(volumes,20);
+  const {ph, pl} = pivotHighLow(highs, lows, 10);
+
+  let lastRes=null, lastSup=null;
+  const scores = new Array(n).fill(0);
+  const L = {}; settings.layers.forEach(l=> L[l.key]=l);
+
+  for(let i=0;i<n;i++){
+    let s = 0;
+    if(ph[i]!=null) lastRes = ph[i];
+    if(pl[i]!=null) lastSup = pl[i];
+
+    if(L.trend.enabled && ema20[i]!=null && ema50[i]!=null && ema200[i]!=null){
+      let t=0;
+      if(closes[i]>ema20[i] && ema20[i]>ema50[i] && ema50[i]>ema200[i]) t=3;
+      else if(closes[i]<ema20[i] && ema20[i]<ema50[i] && ema50[i]<ema200[i]) t=-3;
+      else if(closes[i]>ema20[i] && ema20[i]>ema50[i]) t=1;
+      else if(closes[i]<ema20[i] && ema20[i]<ema50[i]) t=-1;
+      s += t * L.trend.weight;
+    }
+    if(L.momentum.enabled && rsiArr[i]!=null && macdLine[i]!=null && signal[i]!=null){
+      let m = (macdLine[i]>signal[i]?1:-1) + (rsiArr[i]>50?1:-1);
+      s += m * L.momentum.weight;
+    }
+    if(L.volume.enabled && volumes[i] && volAvg[i]){
+      let v = 0;
+      if(volumes[i] > volAvg[i]*1.2) v = closes[i]>opens[i] ? 1 : -1;
+      s += v * L.volume.weight;
+    }
+    if(L.priceAction.enabled && i>=20){
+      const bullEng = closes[i]>opens[i] && closes[i-1]<opens[i-1] && closes[i]>opens[i-1] && opens[i]<closes[i-1];
+      const bearEng = closes[i]<opens[i] && closes[i-1]>opens[i-1] && closes[i]<opens[i-1] && opens[i]>closes[i-1];
+      const recentHigh = Math.max(...highs.slice(i-20,i));
+      const recentLow = Math.min(...lows.slice(i-20,i));
+      let pa = (bullEng?1:0)+(closes[i]>recentHigh?1:0)-(bearEng?1:0)-(closes[i]<recentLow?1:0);
+      s += pa * L.priceAction.weight;
+    }
+    if(L.sr.enabled){
+      let sr=0;
+      if(lastSup!=null && Math.abs(closes[i]-lastSup)<=settings.srProximityPts && closes[i]>opens[i]) sr+=2;
+      if(lastRes!=null && Math.abs(closes[i]-lastRes)<=settings.srProximityPts && closes[i]<opens[i]) sr-=2;
+      s += sr * L.sr.weight;
+    }
+    scores[i]=s;
+  }
+  return {
+    scores, lastResistance:lastRes, lastSupport:lastSup, atrArr:atr(highs,lows,closes,14),
+    ema200Last: ema200[n-1], ema50Last: ema50[n-1], closeLast: closes[n-1], rsiLast: rsiArr[n-1],
+  };
+}
+
+function matchStats(histScores, histMoves, currentScore, band){
+  let wins=0, losses=0, sumWin=0, sumLoss=0, count=0;
+  for(let i=0;i<histScores.length;i++){
+    if(Math.abs(histScores[i]-currentScore)<=band){
+      count++;
+      const m = histMoves[i];
+      if(m>0){ wins++; sumWin+=m; }
+      else if(m<0){ losses++; sumLoss+=m; }
+    }
+  }
+  return {
+    probUp: count>0 ? (wins/count)*100 : null,
+    avgWin: wins>0 ? sumWin/wins : null,
+    avgLoss: losses>0 ? sumLoss/losses : null,
+    count
+  };
+}
+function decide(st){
+  if(st.probUp==null) return {dir:'collecting', prob:null, target:null, risk:null, enough:false};
+  const probDown = 100-st.probUp;
+  const avgDownMag = st.avgLoss!=null ? -st.avgLoss : null;
+  const avgUpMag = st.avgWin;
+  const expLong = (st.avgWin!=null && st.avgLoss!=null) ? (st.probUp/100)*st.avgWin + (probDown/100)*st.avgLoss : null;
+  const expShort = (st.avgWin!=null && st.avgLoss!=null) ? (probDown/100)*avgDownMag - (st.probUp/100)*avgUpMag : null;
+  const enough = st.count >= settings.minSamples;
+  const dirLong = enough && expLong!=null && expLong>settings.minEdge && st.probUp>=settings.minProb;
+  const dirShort = enough && expShort!=null && expShort>settings.minEdge && probDown>=settings.minProb;
+  const dir = dirLong?'up':dirShort?'down':'flat';
+  const prob = !enough?null: dir==='up'?st.probUp: dir==='down'?probDown: Math.max(st.probUp,probDown);
+  const target = dir==='up'?avgUpMag: dir==='down'?avgDownMag: null;
+  const risk = dir==='up'?(st.avgLoss!=null?Math.abs(st.avgLoss):null): dir==='down'?avgUpMag: null;
+  return {dir, prob, target, risk, enough};
+}
+
+function buildHorizon(scores, closes, bars){
+  const hs=[], hm=[];
+  for(let i=bars;i<closes.length;i++){
+    hs.push(scores[i-bars]);
+    hm.push((closes[i]-closes[i-bars])/closes[i-bars]*100);
+  }
+  const cap = settings.maxSamples;
+  return {hs: hs.slice(-cap), hm: hm.slice(-cap)};
+}
+
+// ============================================================
+// DATA FETCH (Twelve Data)
+// ============================================================
+async function fetchHistory(){
+  if(!settings.apiKey){ throw new Error('NO_KEY'); }
+  // Weekly candles: Twelve Data supports "1week" natively, so no manual boundary-hour
+  // aggregation is needed here (unlike the 4H version, which had to match Plus500's exact
+  // daily reset hours). We just pull native weekly bars directly.
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1week&outputsize=500&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if(json.status==='error' || !json.values) throw new Error(json.message || 'FETCH_ERROR');
+  const weekly = json.values.slice().reverse(); // oldest -> newest
+
+  // The most recent bar may be the still-forming current week — the app tracks that live
+  // separately (via the live-price tick), so history should only contain CLOSED weekly candles.
+  const now = new Date();
+  const closedBars = weekly.filter(bar => {
+    const barDate = new Date(bar.datetime.replace(' ', 'T'));
+    const daysSince = (now - barDate) / 86400000;
+    return daysSince >= 7; // a full week has actually elapsed since this bar's open
+  });
+
+  return {
+    closes: closedBars.map(v=>parseFloat(v.close)),
+    highs: closedBars.map(v=>parseFloat(v.high)),
+    lows: closedBars.map(v=>parseFloat(v.low)),
+    opens: closedBars.map(v=>parseFloat(v.open)),
+    volumes: closedBars.map(v=>v.volume?parseFloat(v.volume):0),
+  };
+}
+async function fetchQuote(){
+  const url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(settings.symbol)}&apikey=${encodeURIComponent(settings.apiKey)}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if(json.price) return parseFloat(json.price);
+  return null;
+}
+async function fetchUsdIls(){
+  try{
+    const url = `https://api.twelvedata.com/price?symbol=USD/ILS&apikey=${encodeURIComponent(settings.apiKey)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    return json.price ? parseFloat(json.price) : null;
+  }catch(e){ return null; }
+}
+
+// ============================================================
+// ALERTS — removed per user request. Kept as a no-op so existing calls don't break.
+// ============================================================
+function notify(title, body){ /* notifications disabled */ }
+
+// position open/close tracking (persisted so it survives app reopen)
+// Unified position monitor: opens on the intra-candle open-crossing pattern (both directions,
+// confirmed by the trend score), and closes when price reaches the target or the stop.
+function loadPosState(){
+  try{ return JSON.parse(localStorage.getItem('goldai_position')||'null'); }
+  catch(e){ return null; }
+}
+function savePosState(p){
+  try{ localStorage.setItem('goldai_position', JSON.stringify(p)); }catch(e){}
+}
+function estimateTimeToTarget(entry, target){
+  if(!lastAtr || lastAtr<=0) return null;
+  const dist = Math.abs(target-entry);
+  const estCandles = dist / lastAtr; // rough: ATR = average movement per weekly candle
+  const estHours = estCandles * 24 * 7; // 168 hours per weekly candle
+  const chargedNights = Math.ceil(estHours/24); // one financing charge per night held, no special multiplier
+  return {estCandles, estHours, chargedNights};
+}
+
+function profitLossStats(entry, target, risk, dirUp, oz){
+  oz = oz || 1;
+  const targetPct = Math.abs(target-entry)/entry*100;
+  const riskPct = Math.abs(risk-entry)/entry*100;
+  const useCalibratedMargin = settings.marginRatio!=null;
+  const marginUsd = useCalibratedMargin ? entry*oz*settings.marginRatio : (oz * entry) / settings.leverage;
+  const grossProfitUsd = entry * (targetPct/100) * oz;
+  const grossLossUsd = entry * (riskPct/100) * oz;
+  const spreadCostUsd = settings.spreadCost * oz; // spread is a per-unit price difference, scales with size
+  // Total cost basis for % returns = margin (collateral) + spread (paid cost) — everything else
+  // (profit/loss %, recommended capital, etc.) is derived from this combined total.
+  const totalCostUsd = marginUsd + spreadCostUsd;
+
+  const timeInfo = estimateTimeToTarget(entry, target);
+  const overnightPct = dirUp ? settings.overnightBuyPct : settings.overnightSellPct;
+  const overnightUsdPerNight = entry * (overnightPct/100) * oz;
+  const totalFinancingUsd = timeInfo ? overnightUsdPerNight * timeInfo.chargedNights : 0;
+
+  const netProfitUsd = grossProfitUsd - spreadCostUsd - settings.commissionPerTrade + totalFinancingUsd;
+  const netLossUsd = grossLossUsd + spreadCostUsd + settings.commissionPerTrade - totalFinancingUsd;
+  const usdIls = lastUsdIls || 0;
+  return {
+    targetPct, riskPct,
+    profitIls: netProfitUsd * usdIls,
+    lossIls: netLossUsd * usdIls,
+    profitPctMargin: totalCostUsd>0 ? (netProfitUsd/totalCostUsd)*100 : null,
+    lossPctMargin: totalCostUsd>0 ? (netLossUsd/totalCostUsd)*100 : null,
+    timeInfo, financingIls: totalFinancingUsd * usdIls,
+    marginUsd, totalCostUsd,
+    breakdown: {
+      grossProfitIls: grossProfitUsd * usdIls,
+      grossLossIls: grossLossUsd * usdIls,
+      spreadIls: spreadCostUsd * usdIls,
+      commissionIls: settings.commissionPerTrade * usdIls,
+      financingIls: totalFinancingUsd * usdIls,
+      marginIls: marginUsd * usdIls,
+      totalCostIls: totalCostUsd * usdIls,
+      usdIls,
+    },
+  };
+}
+function applyRecommendedBalance(amount){
+  settings.accountBalanceIls = Math.round(amount);
+  document.getElementById('accountBalanceIls').value = settings.accountBalanceIls;
+  saveSettings();
+  renderBanner(`יתרת החשבון עודכנה ל-₪${Math.round(amount)}. הפקידי סכום זה בפועל בפלוס500.`, 'warn');
+}
+
+function forcedClosureInfo(entry, risk, dirUp, oz){
+  oz = oz || 1;
+  if(!lastUsdIls) return null;
+  const notionalUsd = oz * entry;
+  const maintenanceUsd = notionalUsd * settings.maintPct / 100;
+  const balanceUsd = settings.accountBalanceIls / lastUsdIls;
+  const forcedPrice = dirUp ? entry - (balanceUsd - maintenanceUsd)/oz : entry + (balanceUsd - maintenanceUsd)/oz;
+  const stopDistanceUsd = Math.abs(entry-risk) * oz;
+  const requiredBalanceUsd = maintenanceUsd + stopDistanceUsd;
+  return {
+    forcedPrice,
+    requiredBalanceIls: requiredBalanceUsd * lastUsdIls,
+    currentBalanceIls: settings.accountBalanceIls,
+    safeFromForcedClosure: dirUp ? forcedPrice <= risk : forcedPrice >= risk,
+  };
+}
+
+function plLine(entry, target, risk, dirUp, oz){
+  oz = oz || settings.posSize || 1;
+  const pl = profitLossStats(entry, target, risk, dirUp, oz);
+  const t = pl.timeInfo;
+  const timeLine = t
+    ? `<span style="color:var(--text-dim); font-size:12px;">זמן משוער ליעד: ~${fmt(t.estHours/24,1)} ימים (${t.chargedNights} לילות מימון) — מימון: ${pl.financingIls>=0?'+':''}₪${fmt(pl.financingIls,0)}</span><br>`
+    : '';
+  const fc = forcedClosureInfo(entry, risk, dirUp, oz);
+  const forcedLossIls = fc ? profitLossStats(entry, target, fc.forcedPrice, dirUp, oz).lossIls : null;
+  const fcLine = fc
+    ? `<span style="color:var(--gold); font-size:12px;">שער סטופ (צפי הפסד): ${fmt(risk)}</span><br>` +
+      `<span style="color:${fc.safeFromForcedClosure?'var(--text-dim)':'var(--down)'}; font-size:12px;">שער סגירה כפויה (${oz} אונקיות, יתרה ₪${fmt(fc.currentBalanceIls,0)}): ${fmt(fc.forcedPrice)}${fc.safeFromForcedClosure?'':' ⚠️ לפני הסטופ!'}</span><br>` +
+      `<span style="color:var(--down); font-size:12px;">הפסד נטו בסגירה כפויה: -₪${fmt(Math.abs(forcedLossIls),0)}</span><br>` +
+      `<div style="display:flex; align-items:center; gap:8px; margin:4px 0;"><span style="color:var(--gold); font-size:13px; font-weight:700;">הון מומלץ להפקדה (${oz} אונקיות): ₪${fmt(fc.requiredBalanceIls,0)}</span>` +
+      `<button onclick="applyRecommendedBalance(${fc.requiredBalanceIls})" style="padding:4px 10px; border-radius:6px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-size:11px; cursor:pointer;">אשר סכום זה</button></div>`
+    : '';
+  return timeLine + fcLine +
+    `<span style="color:var(--down); font-size:13px;">הפסד נטו: -₪${fmt(Math.abs(pl.lossIls),0)} (${pl.lossPctMargin!=null?'-'+fmt(Math.abs(pl.lossPctMargin),1)+'% על העלות הכוללת':''})</span>`;
+}
+
+function monitorPosition(legDir, mainAgrees, lastClose, r0){
+  const pos = loadPosState();
+  const earlyCard = document.getElementById('earlyCard');
+
+  const probLine = (r0 && r0.prob!=null) ? `הסתברות P%: ${fmt(r0.prob,1)}%` : `הסתברות P%: אוספת עדיין נתונים`;
+
+  // Breakout up = new/starting UP trend after consolidation. Breakout down = new/starting DOWN trend.
+  const breakoutUp = checkConsolidationBreakout('up');
+  const breakoutDown = checkConsolidationBreakout('down');
+  // The breakout only becomes a real "entry probability" when the P% engine doesn't actively
+  // contradict it (enough samples AND pointing the opposite way) — matching real data, not just the pattern alone.
+  const probContradictsUp = r0 && r0.enough && r0.dir==='down';
+  const probContradictsDown = r0 && r0.enough && r0.dir==='up';
+  const confirmedBreakoutUp = breakoutUp && !probContradictsUp;
+  const confirmedBreakoutDown = breakoutDown && !probContradictsDown;
+  // The last CONFIRMED closed weekly candle's price — used for stop/trend-exit so a brief live-price
+  // wick can't trigger a premature exit right before the move actually goes our way.
+  const closedClose = historyCache ? historyCache.closes[historyCache.closes.length-1] : lastClose;
+
+  if(!pos || !pos.open){
+    const entryDir = confirmedBreakoutUp ? 'up' : confirmedBreakoutDown ? 'down' : null;
+    if(entryDir){
+      const n = historyCache.closes.length;
+      const lookback = settings.consolidationLookback;
+      const startIdx = n - 1 - lookback, endIdx = n - 1;
+      const rangeHigh = Math.max(...historyCache.highs.slice(startIdx, endIdx));
+      const rangeLow = Math.min(...historyCache.lows.slice(startIdx, endIdx));
+      // Stop placed at the OTHER side of the consolidation range that was just broken —
+      // if price falls back into the range, the breakout has failed.
+      const structuralStop = entryDir==='up' ? rangeLow - lastAtr*0.2 : rangeHigh + lastAtr*0.2;
+      const stopDist = Math.abs(lastClose - structuralStop);
+      let targetDist = entryDir==='up'
+        ? (lastResistance && lastResistance>lastClose ? lastResistance-lastClose : stopDist*2)
+        : (lastSupport && lastSupport<lastClose ? lastClose-lastSupport : stopDist*2);
+      if(targetDist < stopDist*2) targetDist = stopDist*2;
+      const target = entryDir==='up' ? lastClose+targetDist : lastClose-targetDist;
+      const risk = structuralStop;
+
+      savePosState({open:true, dir:entryDir, entry:lastClose, target, risk});
+      const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה מדשדוש' : '🔴 SHORT (מכירה) — פריצה מדשדוש';
+      document.getElementById('earlyMsg').innerHTML = `${dirLabel}<br>` +
+        `<span style="color:var(--up)">כניסה בשער ${fmt(lastClose)}</span><br>` +
+        `<span style="color:var(--gold)">יעד סגירה: ${fmt(target)}</span><br>` +
+        `<span style="color:var(--down)">סטופ (חזרה לתוך הדשדוש): ${fmt(risk)}</span><br>` +
+        `<span style="color:var(--text-dim); font-size:13px;">פריצה מטווח דשדוש של ${lookback} נרות שבועיים — P% תואם ולא סותר</span><br>` +
+        plLine(lastClose, target, risk, entryDir==='up') + `<br>` +
+        `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
+      earlyCard.style.display = 'block';
+      notify('Gold AI - פתחי פוזיציה', `${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)} — פריצת דשדוש`);
+    } else {
+      earlyCard.style.display = 'none';
+    }
+    return;
+  }
+
+  // position is open - show it, and watch for target/stop/trend-end
+  const dirLabel = pos.dir==='up' ? '🟢 LONG פתוח' : '🔴 SHORT פתוח';
+  document.getElementById('earlyMsg').innerHTML = `${dirLabel} מאז ${fmt(pos.entry)}<br>` +
+    `<span style="color:var(--gold)">יעד: ${fmt(pos.target)} | סטופ: ${fmt(pos.risk)}</span><br>` +
+    `<span style="color:var(--text-dim);">מחיר נוכחי: ${fmt(lastClose)}</span><br>` +
+    plLine(pos.entry, pos.target, pos.risk, pos.dir==='up') + `<br>` +
+    `<span style="color:var(--text-dim); font-size:12px;">⚠️ הסטופ מאושר רק כשנר שבועי שלם נסגר מעבר לו - לא לפי תנודה רגעית, כדי למנוע יציאה מוקדמת מרעש. היעד כן יכול להיסגר על המחיר החי מיד כשהוא מגיע.</span><br>` +
+    `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
+  earlyCard.style.display = 'block';
+
+  // Target: fire on live price (take the win as soon as it's actually reached).
+  const hitTarget = pos.dir==='up' ? lastClose>=pos.target : lastClose<=pos.target;
+  // Stop and trend-ending exit: only confirmed on a CLOSED candle, to avoid a brief wick
+  // triggering an exit right before the price turns back in our favor.
+  const hitStop = pos.dir==='up' ? closedClose<=pos.risk : closedClose>=pos.risk;
+  // Trend ending: a fresh breakout in the OPPOSITE direction (a new consolidation just broke the other way).
+  const trendEnding = pos.dir==='up' ? breakoutDown : breakoutUp;
+  if(hitTarget){
+    notify('Gold AI - סגרי פוזיציה (יעד)', `הגעת ליעד בשער ${fmt(lastClose)} - זה הזמן לסגור ברווח`);
+    savePosState({open:false});
+  } else if(hitStop){
+    notify('Gold AI - סגרי פוזיציה (סטופ)', `הגעת לסטופ בשער ${fmt(lastClose)} - זה הזמן לסגור ולהגביל הפסד`);
+    savePosState({open:false});
+  } else if(trendEnding){
+    notify('Gold AI - סגרי פוזיציה (סוף מגמה)', `פריצת דשדוש בכיוון הפוך - המגמה נראית מסתיימת, מומלץ לסגור בשער ${fmt(lastClose)}`);
+    savePosState({open:false});
+  }
+}
+
+// Core signal: TWO closed candles, both with a significant TAIL (wick) reaching the SAME
+// support or resistance zone — a real rejection at that level, not just candle color.
+// Used for BOTH entry (a new trend starting) and exit (the current trend ending).
+// Core signal: a CONSOLIDATION (dashdush) — price range over the last N closed weekly candles
+// stayed tight relative to ATR — followed by a genuine BREAKOUT beyond that range. This is
+// "entry at the start of a trend after consolidation", not a reversal-tail pattern.
+function checkConsolidationBreakout(direction){
+  if(!historyCache || !lastAtr) return false;
+  const n = historyCache.closes.length;
+  const lookback = settings.consolidationLookback;
+  if(n < lookback + 1) return false;
+
+  const startIdx = n - 1 - lookback; // window excludes the current (still-forming) candle
+  const endIdx = n - 1; // last CLOSED candle
+  const highsWindow = historyCache.highs.slice(startIdx, endIdx);
+  const lowsWindow = historyCache.lows.slice(startIdx, endIdx);
+  const rangeHigh = Math.max(...highsWindow);
+  const rangeLow = Math.min(...lowsWindow);
+  const rangeSize = rangeHigh - rangeLow;
+  const isConsolidating = rangeSize <= lastAtr * settings.consolidationMaxRangeAtrMult;
+  if(!isConsolidating) return false;
+
+  const buffer = lastAtr * settings.breakoutBufferAtrMult;
+  if(direction==='up') return lastKnownClose!=null && lastKnownClose > rangeHigh + buffer;
+  return lastKnownClose!=null && lastKnownClose < rangeLow - buffer;
+}
+
+function getCurrentHourInTz(tz){
+  try{
+    const parts = new Intl.DateTimeFormat('en-US', {timeZone: tz, hour:'2-digit', hour12:false}).formatToParts(new Date());
+    const h = parts.find(p=>p.type==='hour').value;
+    return parseInt(h,10) % 24;
+  }catch(e){ return new Date().getHours(); }
+}
+
+function renderChangeStats(data, lastClose, st, currentScore){
+  const closes = data.closes;
+  // "Weekly change" = change vs the PREVIOUS closed week's close (week-over-week),
+  // since there's no finer intraday boundary data fetched for the weekly version.
+  if(closes.length >= 2){
+    const prevWeekClose = closes[closes.length-2];
+    const weeklyPct = (lastClose - prevWeekClose)/prevWeekClose*100;
+    const el = document.getElementById('chgDaily');
+    el.textContent = (weeklyPct>=0?'+':'') + fmt(weeklyPct,2) + '%';
+    el.style.color = weeklyPct>=0 ? 'var(--up)' : 'var(--down)';
+  }
+  // Current (still-forming) week's change from its own open
+  const candleOpen = closes[closes.length-1];
+  const candlePct = (lastClose - candleOpen)/candleOpen*100;
+  const elC = document.getElementById('chgCandle');
+  elC.textContent = (candlePct>=0?'+':'') + fmt(candlePct,2) + '%';
+  elC.style.color = candlePct>=0 ? 'var(--up)' : 'var(--down)';
+
+  // Expected move to close, for the current direction. When a position is actually open, use its
+  // real entry/target. Otherwise, anchor to the ANTICIPATED ENTRY ZONE (support/resistance) —
+  // not the current live price — since that's where entry could actually trigger per our indicators.
+  const scoreDir = currentScore >= 0 ? 'up' : 'down';
+  const elE = document.getElementById('chgExpected');
+  const elEP = document.getElementById('chgExpectedPrices');
+  const pos = loadPosState();
+  const hasActivePos = pos && pos.open;
+  const rawZone = scoreDir==='up' ? lastSupport : lastResistance;
+  const zoneEntryPrice = (rawZone!=null && lastAtr && Math.abs(lastClose-rawZone) <= lastAtr*settings.maxZoneAtrMult) ? rawZone : null;
+
+  let barEntry = null, barTarget = null, barRisk = null, barDirUp = scoreDir==='up';
+
+  if(hasActivePos){
+    barEntry = pos.entry; barTarget = pos.target; barRisk = pos.risk; barDirUp = pos.dir==='up';
+    const pct = Math.abs(pos.target-pos.entry)/pos.entry*100;
+    elE.textContent = (barDirUp?'+':'-') + fmt(pct,2) + '% (' + (barDirUp?'LONG':'SHORT') + ', פוזיציה פעילה)';
+    elE.style.color = barDirUp ? 'var(--up)' : 'var(--down)';
+    elEP.textContent = `משער כניסה ${fmt(pos.entry)} עד שער יעד ${fmt(pos.target)}`;
+  } else if(zoneEntryPrice!=null && lastAtr){
+    const stopDist = lastAtr * settings.atrStopMult;
+    let targetDist = scoreDir==='up'
+      ? (lastResistance && lastResistance>zoneEntryPrice ? lastResistance-zoneEntryPrice : stopDist*2)
+      : (lastSupport && lastSupport<zoneEntryPrice ? zoneEntryPrice-lastSupport : stopDist*2);
+    if(targetDist < stopDist*2) targetDist = stopDist*2;
+    barEntry = zoneEntryPrice;
+    barTarget = scoreDir==='up' ? zoneEntryPrice+targetDist : zoneEntryPrice-targetDist;
+    barRisk = scoreDir==='up' ? zoneEntryPrice-stopDist : zoneEntryPrice+stopDist;
+    const pct = (targetDist/zoneEntryPrice)*100;
+    elE.textContent = (scoreDir==='up'?'+':'-') + fmt(pct,2) + '% (' + (scoreDir==='up'?'LONG':'SHORT') + ', צפי מאזור כניסה עתידי — לא המלצה בפועל)';
+    elE.style.color = scoreDir==='up' ? 'var(--up)' : 'var(--down)';
+    elEP.textContent = `מאזור כניסה צפוי ${fmt(barEntry)} עד שער יעד ${fmt(barTarget)}`;
+  } else {
+    elE.textContent = 'אין עדיין אזור תמיכה/התנגדות מזוהה';
+    elE.style.color = 'var(--text-dim)';
+    elEP.textContent = '';
+  }
+
+  // ---- BAR 1: entry-centered price bar — green half toward target, red half toward stop ----
+  const tgEntryMark = document.getElementById('tgEntryMark');
+  const tgNowMark = document.getElementById('tgNowMark');
+  const tgLabels = document.getElementById('tgLabels');
+  const tgGreenZone = document.getElementById('tgGreenZone');
+  const tgRedZone = document.getElementById('tgRedZone');
+  const tgLeftEdgeLabel = document.getElementById('tgLeftEdgeLabel');
+  const tgRightEdgeLabel = document.getElementById('tgRightEdgeLabel');
+  if(barTarget!=null && barEntry!=null && barRisk!=null){
+    const targetIsHigher = barTarget > barEntry;
+    // price -> % position, with entry FIXED at 50%, target-side and stop-side each get their own half
+    const priceToPct = (v) => {
+      if(targetIsHigher){
+        if(v >= barEntry) return 50 + 50*Math.max(0,Math.min(1,(v-barEntry)/(barTarget-barEntry)));
+        return 50 - 50*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barRisk)));
+      } else {
+        if(v <= barEntry) return 50 - 50*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barTarget)));
+        return 50 + 50*Math.max(0,Math.min(1,(v-barEntry)/(barRisk-barEntry)));
+      }
+    };
+    if(targetIsHigher){
+      tgGreenZone.style.left = '50%'; tgGreenZone.style.width = '50%';
+      tgRedZone.style.left = '0%'; tgRedZone.style.width = '50%';
+      tgLeftEdgeLabel.textContent = 'סטופ'; tgLeftEdgeLabel.style.color = 'var(--down)';
+      tgRightEdgeLabel.textContent = 'יעד'; tgRightEdgeLabel.style.color = 'var(--up)';
+    } else {
+      tgGreenZone.style.left = '0%'; tgGreenZone.style.width = '50%';
+      tgRedZone.style.left = '50%'; tgRedZone.style.width = '50%';
+      tgLeftEdgeLabel.textContent = 'יעד'; tgLeftEdgeLabel.style.color = 'var(--up)';
+      tgRightEdgeLabel.textContent = 'סטופ'; tgRightEdgeLabel.style.color = 'var(--down)';
+    }
+    tgEntryMark.style.left = '50%';
+    tgNowMark.style.left = priceToPct(lastClose) + '%';
+    const entryTitle = hasActivePos ? 'כניסה בפועל' : 'אזור כניסה צפוי';
+    tgLabels.innerHTML =
+      `<div class="grid2" style="direction:rtl; gap:6px;">` +
+        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--gold);">${entryTitle}</div><div class="val" style="font-size:13px;">${fmt(barEntry)}</div></div>` +
+        `<div class="stat" style="padding:8px;"><div class="lbl">מחיר נוכחי</div><div class="val" style="font-size:13px;">${fmt(lastClose)}</div></div>` +
+        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--up);">יעד</div><div class="val" style="font-size:13px;">${fmt(barTarget)}</div></div>` +
+        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--down);">סטופ</div><div class="val" style="font-size:13px;">${fmt(barRisk)}</div></div>` +
+      `</div>`;
+  } else {
+    tgEntryMark.style.left = '-10%'; tgNowMark.style.left = '-10%';
+    tgGreenZone.style.width = '0%'; tgRedZone.style.width = '0%';
+    tgLabels.innerHTML = `<span style="color:var(--text-dim);">אין עדיין מספיק נתונים לחישוב יעד</span>`;
+  }
+
+  // ---- BAR 2: trend-reversal-only indicator (independent of price/target/stop) ----
+  const revMark = document.getElementById('revMark');
+  const revLabel = document.getElementById('revLabel');
+  if(hasActivePos){
+    const reversed = pos.dir==='up' ? checkConsolidationBreakout('down') : checkConsolidationBreakout('up');
+    if(reversed){
+      revMark.style.left = '75%';
+      revLabel.innerHTML = '<span style="color:var(--down); font-weight:700;">🔴 היפוך מגמה זוהה - סוגרים</span> — פריצת דשדוש בכיוון הפוך לפוזיציה, גם אם המחיר עדיין בטווח הירוק בסרגל 1.';
+    } else {
+      revMark.style.left = '25%';
+      revLabel.innerHTML = '<span style="color:var(--up); font-weight:700;">🟢 בתוך המגמה</span> — אין פריצה הפוכה עדיין, נשארים בפנים.';
+    }
+  } else {
+    revMark.style.left = '50%';
+    revLabel.textContent = 'אין פוזיציה פעילה';
+  }
+
+  // ---- BAR 3: worthiness of staying in the position (reward potential vs risk & ongoing cost) ----
+  const worthMark = document.getElementById('worthMark');
+  const worthLabel = document.getElementById('worthLabel');
+  if(hasActivePos && barTarget!=null && barRisk!=null){
+    const remainingReward = Math.abs(barTarget - lastClose);
+    const remainingRisk = Math.abs(lastClose - barRisk);
+    const probFavor = st.probUp!=null ? (barDirUp ? st.probUp/100 : (100-st.probUp)/100) : 0.5;
+    const ratePct = barDirUp ? settings.overnightBuyPct : settings.overnightSellPct; // typically negative
+    const weeklyFinancing = lastClose*(ratePct/100)*7; // signed — a further week of holding cost
+    const expectedValue = remainingReward*probFavor - remainingRisk*(1-probFavor) + weeklyFinancing;
+    const totalRange = remainingReward + remainingRisk || 1;
+    const worthPct = Math.max(-100, Math.min(100, (expectedValue/totalRange)*100));
+    const barPos = (worthPct+100)/2;
+    worthMark.style.left = barPos + '%';
+    const verdict = worthPct>15 ? 'משתלם להישאר בפוזיציה' : worthPct<-15 ? 'לא משתלם - שקלי לסגור עכשיו' : 'גבולי - תלוי בהעדפת הסיכון שלך';
+    const verdictColor = worthPct>15 ? 'var(--up)' : worthPct<-15 ? 'var(--down)' : 'var(--text-dim)';
+    worthLabel.innerHTML = `<span style="color:${verdictColor}; font-weight:700;">${verdict}</span> (${worthPct>=0?'+':''}${fmt(worthPct,0)}%) — הערכה: פוטנציאל נותר מול סיכון נותר, כולל P% ומימון לילה נוסף`;
+  } else {
+    worthMark.style.left = '50%';
+    worthLabel.textContent = hasActivePos ? 'אין עדיין מספיק נתונים לחישוב' : 'אין פוזיציה פעילה';
+  }
+
+  // Buying: profit/loss per position size, using the EXACT SAME entry/target/risk as the
+  // forecast above (real position when open, otherwise the anticipated entry-zone projection).
+  if(barEntry!=null && barTarget!=null && barRisk!=null && lastUsdIls){
+    const sizes = [1, 10, 20];
+    let sizeHtml = '';
+    sizes.forEach(oz=>{
+      const plN = profitLossStats(barEntry, barTarget, barRisk, barDirUp, oz);
+      const bN = plN.breakdown;
+      const fcN = forcedClosureInfo(barEntry, barRisk, barDirUp, oz);
+      sizeHtml += `<div style="border:1px solid var(--border); border-radius:10px; padding:10px; margin-bottom:8px;">` +
+        `<div style="font-weight:700; margin-bottom:6px; color:var(--gold);">${oz} אונקיות</div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער כניסה</span><span>${fmt(barEntry)}</span></div>` +
+        (()=>{
+          const useCalibratedMargin = settings.marginRatio!=null;
+          const costUsd = useCalibratedMargin ? barEntry*oz*settings.marginRatio : (barEntry*oz)/settings.leverage;
+          const costIls = lastUsdIls ? costUsd*lastUsdIls : null;
+          const costLabel = useCalibratedMargin ? 'עלות (בטחונות, מכויל ליחס שהזנת)' : `עלות (מרווח נדרש, מינוף 1:${settings.leverage})`;
+          return `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">${costLabel}</span><span>$${fmt(costUsd,2)}${costIls!=null?' / ₪'+fmt(costIls,2):''}</span></div>`;
+        })() +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער יעד</span><span style="color:var(--up);">${fmt(barTarget)} (+${fmt(plN.targetPct,2)}% מחיר / +${fmt(plN.profitPctMargin,1)}% ממונף)</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער סטופ</span><span style="color:var(--down);">${fmt(barRisk)} (-${fmt(plN.riskPct,2)}% מחיר / -${fmt(Math.abs(plN.lossPctMargin),1)}% ממונף)</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">רווח נטו</span><span style="color:var(--up);">+₪${fmt(plN.profitIls,0)} (${plN.profitPctMargin!=null?'+'+fmt(plN.profitPctMargin,1)+'% עלות':''})</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הפסד נטו</span><span style="color:var(--down);">-₪${fmt(Math.abs(plN.lossIls),0)} (${plN.lossPctMargin!=null?'-'+fmt(Math.abs(plN.lossPctMargin),1)+'% עלות':''})</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">מרווח דינמי (עלות)</span><span>-₪${fmt(bN.spreadIls,0)}</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;"><span style="color:var(--gold);">עלות כוללת (בטחונות + מרווח דינמי)</span><span style="color:var(--gold);">₪${fmt(bN.totalCostIls,0)}</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">מימון לילה</span><span style="color:${bN.financingIls>=0?'var(--up)':'var(--down)'};">${bN.financingIls>=0?'+':'-'}₪${fmt(Math.abs(bN.financingIls),0)}</span></div>` +
+        (fcN ? `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער סגירה כפויה (יתרה נוכחית)</span><span style="color:${fcN.safeFromForcedClosure?'var(--text-dim)':'var(--down)'};">${fmt(fcN.forcedPrice)}${fcN.safeFromForcedClosure?'':' ⚠️'}</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הפסד נטו בסגירה כפויה</span><span style="color:var(--down);">-₪${fmt(Math.abs(profitLossStats(barEntry, barTarget, fcN.forcedPrice, barDirUp, oz).lossIls),0)}</span></div>` +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הון מומלץ</span><span style="color:var(--gold);">₪${fmt(fcN.requiredBalanceIls,0)}</span></div>` : '') +
+      `</div>`;
+    });
+    document.getElementById('capSizeTable').innerHTML = sizeHtml;
+  } else {
+    document.getElementById('capSizeTable').innerHTML = lastUsdIls ? 'אין עדיין מספיק נתונים לחישוב' : 'ממתין לשער דולר-שקל';
+  }
+}
+
+// ============================================================
+// MINI CANDLESTICK CHART (last 4H candles + current price line)
+// ============================================================
+function drawMiniChart(data, livePrice, count=30){
+  const canvas = document.getElementById('miniChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const leftPad = 52; // room for price labels
+  ctx.clearRect(0,0,W,H);
+
+  const prevClose = data.closes[data.closes.length-1];
+  const liveOpen = prevClose;
+  updateLiveCandleRange(liveOpen, livePrice);
+  const liveHigh = liveCandleHigh;
+  const liveLow = liveCandleLow;
+
+  const opens = [...data.opens, liveOpen];
+  const highs = [...data.highs, liveHigh];
+  const lows = [...data.lows, liveLow];
+  const closes = [...data.closes, livePrice];
+
+  const n = Math.min(count+1, closes.length);
+  const hSlice = highs.slice(-n), lSlice = lows.slice(-n), oSlice = opens.slice(-n), cSlice = closes.slice(-n);
+
+  // Consolidation range (same window/logic as checkConsolidationBreakout) for the overlay lines
+  const lookback = settings.consolidationLookback;
+  let rangeHigh = null, rangeLow = null, isConsolidating = false, breakoutDir = null;
+  if(data.highs.length >= lookback + 1 && lastAtr){
+    const fullN = data.closes.length;
+    const startIdx = fullN - lookback, endIdx = fullN;
+    rangeHigh = Math.max(...data.highs.slice(startIdx, endIdx));
+    rangeLow = Math.min(...data.lows.slice(startIdx, endIdx));
+    isConsolidating = (rangeHigh-rangeLow) <= lastAtr * settings.consolidationMaxRangeAtrMult;
+    const buffer = lastAtr * settings.breakoutBufferAtrMult;
+    if(isConsolidating){
+      if(livePrice > rangeHigh + buffer) breakoutDir = 'up';
+      else if(livePrice < rangeLow - buffer) breakoutDir = 'down';
+    }
+  }
+
+  let maxV = Math.max(...hSlice, rangeHigh||0);
+  let minV = Math.min(...lSlice, rangeLow!=null?rangeLow:Infinity);
+  const pad = (maxV-minV)*0.1 || 1;
+  maxV += pad; minV -= pad;
+  const scaleY = v => H - ((v-minV)/(maxV-minV))*H;
+  const chartW = W - leftPad;
+
+  // gridlines + price labels
+  ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#9BA0AE'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+  const steps = 4;
+  for(let s=0;s<=steps;s++){
+    const v = minV + (maxV-minV)*s/steps;
+    const y = scaleY(v);
+    ctx.beginPath(); ctx.moveTo(leftPad,y); ctx.lineTo(W,y); ctx.stroke();
+    ctx.fillText(v.toFixed(0), leftPad-6, y+3);
+  }
+
+  // candles: hollow (outline) for up, solid for down; the LAST one is the live/forming candle (dashed)
+  const slotW = chartW/n;
+  const bodyW = Math.max(2, slotW*0.55);
+  for(let i=0;i<n;i++){
+    const isLive = (i === n-1);
+    const x = leftPad + i*slotW + slotW/2;
+    const up = cSlice[i] >= oSlice[i];
+    const color = up ? '#3FB68B' : '#B03A2A';
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, scaleY(hSlice[i]));
+    ctx.lineTo(x, scaleY(lSlice[i]));
+    ctx.stroke();
+    const yO = scaleY(oSlice[i]), yC = scaleY(cSlice[i]);
+    const top = Math.min(yO,yC), h = Math.max(1.5, Math.abs(yC-yO));
+    if(isLive) ctx.setLineDash([2,2]);
+    if(up){
+      ctx.strokeStyle = color; ctx.lineWidth = 1.3;
+      ctx.strokeRect(x-bodyW/2, top, bodyW, h);
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(x-bodyW/2, top, bodyW, h);
+    }
+    ctx.setLineDash([]);
+  }
+
+  // consolidation range overlay
+  if(rangeHigh!=null){
+    const yHigh = scaleY(rangeHigh), yLow = scaleY(rangeLow);
+    ctx.strokeStyle = isConsolidating ? 'rgba(168,120,255,.7)' : 'rgba(168,120,255,.25)';
+    ctx.setLineDash([5,3]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(leftPad,yHigh); ctx.lineTo(W,yHigh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(leftPad,yLow); ctx.lineTo(W,yLow); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
+    let label, labelColor;
+    if(breakoutDir==='up'){ label='🟢 פריצה למעלה!'; labelColor='#3FB68B'; }
+    else if(breakoutDir==='down'){ label='🔴 פריצה למטה!'; labelColor='#B03A2A'; }
+    else if(isConsolidating){ label='⚪ דשדוש'; labelColor='#A878FF'; }
+    else { label=''; labelColor='#9BA0AE'; }
+    if(label){ ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, yHigh-6))); }
+  }
+
+  if(livePrice){
+    const y = scaleY(livePrice);
+    ctx.strokeStyle = '#C9A227'; ctx.setLineDash([3,3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(leftPad,y); ctx.lineTo(W,y); ctx.stroke();
+    ctx.setLineDash([]);
+    // price label box on the left, like the broker's current-price marker
+    ctx.fillStyle = '#C9A227';
+    ctx.fillRect(0, y-9, leftPad-2, 18);
+    ctx.fillStyle = '#12141A'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(livePrice.toFixed(2), leftPad-5, y+3);
+  }
+  ctx.fillStyle = '#9BA0AE'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('נר מקווקו = הנר השבועי הפתוח כרגע', leftPad, H-4);
+}
+
+function renderSimpleMessage(r0, lastClose){
+  let simpleHtml = `מחיר נוכחי: <span style="color:var(--gold)">$${fmt(lastClose)}</span><br>`;
+  if(r0.dir==='up' || r0.dir==='down'){
+    const entry = lastClose;
+    const target = r0.dir==='up' ? entry*(1+r0.target/100) : entry*(1-r0.target/100);
+    const dirLabel = r0.dir==='up' ? '🟢 LONG (קנייה)' : '🔴 SHORT (מכירה)';
+    simpleHtml += `${dirLabel} — הסתברות ${fmt(r0.prob,1)}%<br>`;
+    simpleHtml += `<span style="color:var(--up)">פתחי פוזיציה בשער ${fmt(entry)}</span><br>`;
+    simpleHtml += `<span style="color:var(--down)">סגרי (יעד רווח) בשער ${fmt(target)}</span>`;
+  } else if(!r0.enough){
+    simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר שבועי`;
+  } else {
+    simpleHtml += `⚪ כרגע אין הסתברות כניסה`;
+  }
+  document.getElementById('simpleMsg').innerHTML = simpleHtml;
+}
+
+function renderProbabilityMeter(st, score, legDir, mainAgrees, r0){
+  // Direction implied by the combined score right now (even below the entry threshold, for a live-moving gauge)
+  const scoreDir = score >= 0 ? 'up' : 'down';
+
+  // Use the SAME final decision as the top message (r0), so the two never contradict each other.
+  // r0.dir is only 'up'/'down' when the P% engine clears BOTH the probability AND the statistical-edge bar.
+  const decided = r0 && (r0.dir==='up' || r0.dir==='down');
+  const entryProbability = decided ? r0.prob : Math.min(settings.minProb - 0.1, (st.probUp!=null ? (scoreDir==='up'?st.probUp:100-st.probUp) : 50));
+  const displayDir = decided ? r0.dir : scoreDir;
+
+  const fill = document.getElementById('pmFill');
+  fill.style.width = Math.max(0,Math.min(100,entryProbability)) + '%';
+  fill.style.background = displayDir==='up' ? 'var(--up)' : 'var(--down)';
+
+  const cutoffPct = settings.minProb;
+  document.getElementById('pmCutoff').style.left = cutoffPct + '%';
+
+  const lbl = document.getElementById('pmLabel');
+  lbl.style.left = Math.max(0,Math.min(100,entryProbability)) + '%';
+  lbl.style.color = displayDir==='up' ? 'var(--up)' : 'var(--down)';
+  lbl.textContent = fmt(entryProbability,1) + '% ' + (displayDir==='up' ? 'LONG' : 'SHORT');
+
+  const explainParts = [];
+  explainParts.push(`ציון: ${fmt(score,1)}`);
+  explainParts.push(st.count>=settings.minSamples ? `P%: ${fmt(scoreDir==='up'?st.probUp:100-st.probUp,1)}%` : 'P%: אוסף נתונים');
+  const consolBreakUp = checkConsolidationBreakout('up');
+  const consolBreakDown = checkConsolidationBreakout('down');
+  explainParts.push(consolBreakUp ? 'פריצת דשדוש: ↑ למעלה' : consolBreakDown ? 'פריצת דשדוש: ↓ למטה' : 'פריצת דשדוש: לא פעילה');
+  document.getElementById('pmExplain').textContent = explainParts.join(' | ');
+
+  // Expected time to target — uses the real open position's target if there is one,
+  // otherwise a hypothetical target from the current price in the score's direction.
+  const pos = loadPosState();
+  let timeTargetPrice = null;
+  if(pos && pos.open){
+    timeTargetPrice = pos.target;
+  } else if(lastKnownClose!=null && lastAtr){
+    const stopDist = lastAtr * settings.atrStopMult;
+    let targetDist = scoreDir==='up'
+      ? (lastResistance && lastResistance>lastKnownClose ? lastResistance-lastKnownClose : stopDist*2)
+      : (lastSupport && lastSupport<lastKnownClose ? lastKnownClose-lastSupport : stopDist*2);
+    if(targetDist < stopDist*2) targetDist = stopDist*2;
+    timeTargetPrice = scoreDir==='up' ? lastKnownClose+targetDist : lastKnownClose-targetDist;
+  }
+  const pmTimeEl = document.getElementById('pmTimeToTarget');
+  if(pmTimeEl){
+    if(timeTargetPrice!=null && lastKnownClose!=null){
+      const t = estimateTimeToTarget(lastKnownClose, timeTargetPrice);
+      pmTimeEl.textContent = t ? `צפי זמן ליעד: ~${fmt(t.estHours/24,1)} ימים (${(t.estHours/168).toFixed(1)} שבועות)` : '';
+    } else {
+      pmTimeEl.textContent = '';
+    }
+  }
+
+  // Alert once when the SAME decision that drives the top message actually fires
+  const zone = decided ? displayDir : 'none';
+  const prevZone = localStorage.getItem('goldai_lastZone') || 'none';
+  if(zone!=='none' && zone!==prevZone){
+    notify('Gold AI - פוטנציאל זוהה', `הסתברות ${fmt(entryProbability,1)}% ל-${zone==='up'?'LONG':'SHORT'}`);
+  }
+  localStorage.setItem('goldai_lastZone', zone);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function fmt(n, d=2){ return n==null || isNaN(n) ? '-' : n.toFixed(d); }
+
+function renderBanner(msg, type){
+  document.getElementById('banners').innerHTML += `<div class="banner ${type}">${msg}</div>`;
+}
+function clearBanner(){ document.getElementById('banners').innerHTML=''; }
+
+function renderHorizons(results){
+  const names = ['נר הבא','1 יום','1 שבוע'];
+  let html='';
+  results.forEach((r,i)=>{
+    const dirLabel = r.dir==='collecting' ? 'אוסף נתונים' : r.dir==='up' ? '🟢 עלייה' : r.dir==='down' ? '🔴 ירידה' : '⚪ ללא הסתברות';
+    const dirClass = r.dir==='up'?'up':r.dir==='down'?'down':'none';
+    const tradeYes = (r.dir==='up'||r.dir==='down');
+    html += `<div class="horizon">
+      <div class="h-name">${names[i]}</div>
+      <div class="h-dir ${dirClass}">${dirLabel}<br><span class="trade-pill ${tradeYes?'yes':'no'}">${!r.enough?'ממתין למדגם':tradeYes?'✅ עסקה':'❌ NO TRADE'}</span></div>
+      <div class="h-nums">
+        <div class="prob">${r.prob!=null?fmt(r.prob,1)+'%':'-'}</div>
+        <div class="tr">${r.target!=null?('יעד +'+fmt(r.target,2)+'%'):''} ${r.risk!=null?('סיכון -'+fmt(r.risk,2)+'%'):''}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('horizons').innerHTML = html;
+}
+
+function renderLayersSettings(){
+  const list = document.getElementById('layersList');
+  list.innerHTML = settings.layers.map(l=>`
+    <div class="layer-row">
+      <label class="switch">
+        <input type="checkbox" data-key="${l.key}" class="layer-toggle" ${l.enabled?'checked':''} ${!l.available?'disabled':''}>
+        <span class="slider"></span>
+      </label>
+      <div class="lname">${l.label}${l.tag?`<span class="tag">${l.tag}</span>`:''}</div>
+      <input type="number" step="0.1" class="layer-weight" data-key="${l.key}" value="${l.weight}" ${!l.available?'disabled':''}>
+    </div>
+  `).join('');
+  list.querySelectorAll('.layer-toggle').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = settings.layers.find(x=>x.key===e.target.dataset.key);
+      l.enabled = e.target.checked;
+    });
+  });
+  list.querySelectorAll('.layer-weight').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const l = settings.layers.find(x=>x.key===e.target.dataset.key);
+      l.weight = parseFloat(e.target.value)||0;
+    });
+  });
+}
+
+function fillSettingsForm(){
+  document.getElementById('apiKey').value = settings.apiKey;
+  document.getElementById('symbol').value = settings.symbol;
+  document.getElementById('timezone').value = settings.timezone;
+  document.getElementById('refreshMinutes').value = settings.refreshMinutes;
+  document.getElementById('scoreBand').value = settings.scoreBand;
+  document.getElementById('maxSamples').value = settings.maxSamples;
+  document.getElementById('minSamples').value = settings.minSamples;
+  document.getElementById('minEdge').value = settings.minEdge;
+  document.getElementById('minProb').value = settings.minProb;
+  document.getElementById('barsH1').value = settings.barsH1;
+  document.getElementById('posSize').value = settings.posSize;
+  document.getElementById('leverage').value = settings.leverage;
+  document.getElementById('spreadCost').value = settings.spreadCost;
+  document.getElementById('commissionPerTrade').value = settings.commissionPerTrade;
+  document.getElementById('maintPct').value = settings.maintPct;
+  document.getElementById('riskPercentPerTrade').value = settings.riskPercentPerTrade;
+  document.getElementById('riskPercentPerTrade').value = settings.riskPercentPerTrade;
+  document.getElementById('scoreThreshold').value = settings.scoreThreshold;
+  document.getElementById('consolidationLookback').value = settings.consolidationLookback;
+  document.getElementById('consolidationMaxRangeAtrMult').value = settings.consolidationMaxRangeAtrMult;
+  document.getElementById('breakoutBufferAtrMult').value = settings.breakoutBufferAtrMult;
+  document.getElementById('srProximityPts').value = settings.srProximityPts;
+  document.getElementById('atrStopMult').value = settings.atrStopMult;
+  document.getElementById('maxZoneAtrMult').value = settings.maxZoneAtrMult;
+  document.getElementById('overnightBuyPct').value = settings.overnightBuyPct;
+  document.getElementById('overnightSellPct').value = settings.overnightSellPct;
+  document.getElementById('accountBalanceIls').value = settings.accountBalanceIls;
+  renderLayersSettings();
+}
+function readSettingsForm(){
+  settings.apiKey = document.getElementById('apiKey').value.trim();
+  settings.symbol = document.getElementById('symbol').value.trim() || 'XAU/USD';
+  settings.timezone = document.getElementById('timezone').value.trim() || 'Asia/Jerusalem';
+  settings.refreshMinutes = parseFloat(document.getElementById('refreshMinutes').value)||15;
+  settings.scoreBand = parseFloat(document.getElementById('scoreBand').value)||2.5;
+  settings.maxSamples = parseInt(document.getElementById('maxSamples').value)||300;
+  settings.minSamples = parseInt(document.getElementById('minSamples').value)||20;
+  settings.minEdge = parseFloat(document.getElementById('minEdge').value)||0.15;
+  settings.minProb = parseFloat(document.getElementById('minProb').value)||55;
+  settings.barsH1 = parseInt(document.getElementById('barsH1').value)||1;
+  settings.posSize = parseFloat(document.getElementById('posSize').value)||1;
+  settings.leverage = parseFloat(document.getElementById('leverage').value)||150;
+  settings.spreadCost = parseFloat(document.getElementById('spreadCost').value)||0.88;
+  settings.commissionPerTrade = parseFloat(document.getElementById('commissionPerTrade').value)||0;
+  settings.maintPct = parseFloat(document.getElementById('maintPct').value)||0.33;
+  settings.riskPercentPerTrade = parseFloat(document.getElementById('riskPercentPerTrade').value)||1;
+  settings.scoreThreshold = parseFloat(document.getElementById('scoreThreshold').value)||4;
+  settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||6;
+  settings.consolidationMaxRangeAtrMult = parseFloat(document.getElementById('consolidationMaxRangeAtrMult').value)||2.0;
+  settings.breakoutBufferAtrMult = parseFloat(document.getElementById('breakoutBufferAtrMult').value)||0.2;
+  settings.srProximityPts = parseFloat(document.getElementById('srProximityPts').value)||3;
+  settings.atrStopMult = parseFloat(document.getElementById('atrStopMult').value)||1.0;
+  settings.maxZoneAtrMult = parseFloat(document.getElementById('maxZoneAtrMult').value)||8;
+  settings.overnightBuyPct = parseFloat(document.getElementById('overnightBuyPct').value)||-0.0319;
+  settings.overnightSellPct = parseFloat(document.getElementById('overnightSellPct').value)||-0.0120;
+  settings.accountBalanceIls = parseFloat(document.getElementById('accountBalanceIls').value)||1000;
+}
+
+// ============================================================
+// MAIN REFRESH CYCLE
+// ============================================================
+function renderDailyStatus(elId, storageKey){
+  const el = document.getElementById(elId);
+  const lastTs = parseInt(localStorage.getItem(storageKey)||'0', 10);
+  const hoursAgo = lastTs ? (Date.now()-lastTs)/3600000 : Infinity;
+  if(hoursAgo < 24){
+    el.textContent = '✓ נשמר בהצלחה';
+    el.style.color = 'var(--up)';
+  } else {
+    el.textContent = '✗ נא להזין נתונים ולשמור';
+    el.style.color = 'var(--down)';
+  }
+}
+
+function renderSpreadCard(){
+  document.getElementById('dailySpreadInput').value = settings.spreadCost;
+  renderDailyStatus('spreadDailyStatus', 'goldai_spreadUpdatedAt');
+  const lastTs = parseInt(localStorage.getItem('goldai_spreadUpdatedAt')||'0', 10);
+  const el = document.getElementById('spreadLastUpdated');
+  if(!lastTs){
+    el.textContent = 'עדיין לא עודכן - הזיני את המרווח הנוכחי מפלוס500';
+    el.style.color = 'var(--down)';
+    return;
+  }
+  const hoursAgo = (Date.now()-lastTs)/3600000;
+  const dateStr = new Date(lastTs).toLocaleString('he-IL');
+  if(hoursAgo >= 24){
+    el.textContent = `עודכן לאחרונה: ${dateStr} (עבר יותר מיום - כדאי לעדכן)`;
+    el.style.color = 'var(--down)';
+  } else {
+    el.textContent = `עודכן לאחרונה: ${dateStr}`;
+    el.style.color = 'var(--text-dim)';
+  }
+}
+document.getElementById('saveDailySpreadBtn').addEventListener('click', ()=>{
+  const val = parseFloat(document.getElementById('dailySpreadInput').value);
+  if(isNaN(val) || val<0) return;
+  settings.spreadCost = val;
+  saveSettings();
+  localStorage.setItem('goldai_spreadUpdatedAt', Date.now().toString());
+  renderSpreadCard();
+});
+
+function renderManualPriceCard(){
+  document.getElementById('manualPriceInput').value = settings.manualPriceOverride!=null ? settings.manualPriceOverride : '';
+  document.getElementById('manualPriceIlsInput').value = settings.manualPriceOverrideIls!=null ? settings.manualPriceOverrideIls : '';
+  document.getElementById('manualMarginInput').value = settings.manualMarginOverride!=null ? settings.manualMarginOverride : '';
+  document.getElementById('manualMarginIlsInput').value = settings.manualMarginOverrideIls!=null ? settings.manualMarginOverrideIls : '';
+  renderDailyStatus('manualPriceDailyStatus', 'goldai_manualPriceUpdatedAt');
+  const el = document.getElementById('manualPriceStatus');
+  if(settings.marginRatio!=null){
+    el.textContent = `פעיל: יחס בטחונות מכויל (${fmt(settings.marginRatio*100,3)}% מהשווי) — מחושב אוטומטית על המחיר החי${settings.exchangeRateOverride!=null?`, שער $/₪ מכויל: ${fmt(settings.exchangeRateOverride,3)}`:''}`;
+    el.style.color = 'var(--gold)';
+  } else {
+    el.textContent = 'ריק - המערכת משתמשת בנוסחה האוטומטית (מחיר÷מינוף) ובשער הנמשך אוטומטית';
+    el.style.color = 'var(--text-dim)';
+  }
+}
+document.getElementById('chartZoomBtn').addEventListener('click', ()=>{
+  chartZoomed = !chartZoomed;
+  document.getElementById('chartZoomBtn').textContent = chartZoomed ? '🔍 הקטן' : '🔍 הגדל';
+  const canvas = document.getElementById('miniChart');
+  canvas.height = chartZoomed ? 260 : 150;
+  canvas.style.height = chartZoomed ? '260px' : '150px';
+  if(historyCache && lastKnownClose!=null){
+    drawMiniChart(historyCache, lastKnownClose, chartZoomed ? 5 : 30);
+  }
+});
+
+document.getElementById('saveManualPriceBtn').addEventListener('click', ()=>{
+  const val = parseFloat(document.getElementById('manualPriceInput').value);
+  const valIls = parseFloat(document.getElementById('manualPriceIlsInput').value);
+  const marginVal = parseFloat(document.getElementById('manualMarginInput').value);
+  const marginValIls = parseFloat(document.getElementById('manualMarginIlsInput').value);
+  // Sanity check: gold price should be in the thousands, not tens - catches entering the
+  // margin/cost by mistake instead of the actual price.
+  if(!isNaN(val) && val < 500){
+    renderBanner(`המחיר שהזנת בשדה "שווי" ($${val}) נמוך מדי בשביל להיות מחיר זהב אמיתי - נראה כמו בטחונות בטעות. השדה הזה צריך את מחיר הזהב עצמו (כ-$4,000+), לא נשמר.`, 'err');
+    return;
+  }
+  settings.manualPriceOverride = isNaN(val) ? null : val;
+  settings.manualPriceOverrideIls = isNaN(valIls) ? null : valIls;
+  settings.manualMarginOverride = isNaN(marginVal) ? null : marginVal;
+  settings.manualMarginOverrideIls = isNaN(marginValIls) ? null : marginValIls;
+  // Derive the RATIOS from this one-time calibration — these are what persist and apply to the
+  // ever-updating live price, so margin/value stay in sync with the market automatically.
+  settings.marginRatio = (!isNaN(marginVal) && !isNaN(val) && val>0) ? marginVal/val : null;
+  settings.exchangeRateOverride = (!isNaN(valIls) && !isNaN(val) && val>0) ? valIls/val : null;
+  saveSettings();
+  if(!isNaN(val)) localStorage.setItem('goldai_manualPriceUpdatedAt', Date.now().toString());
+  renderManualPriceCard();
+  refreshAll();
+});
+
+async function refreshAll(){
+  clearBanner();
+  document.getElementById('statusLine').textContent = 'מרעננת נתונים...';
+  if(!settings.apiKey){
+    renderBanner('הזיני מפתח Twelve Data במסך ההגדרות כדי להתחיל.', 'warn');
+    document.getElementById('statusLine').textContent = 'ממתין למפתח API';
+    return;
+  }
+  const currentHourNow = getCurrentHourInTz(settings.timezone);
+  const dayStartHourNow = settings.candleBoundaryHours[0];
+  const marketClosed = currentHourNow < dayStartHourNow; // e.g. 00:xx, before 01:00
+  if(marketClosed){
+    renderBanner(`השוק סגור כרגע (${String(dayStartHourNow-1).padStart(2,'0')}:00-${String(dayStartHourNow).padStart(2,'0')}:00) - הנתונים עשויים להיות לא מעודכנים עד שהמסחר ייפתח מחדש.`, 'warn');
+  }
+  try{
+    historyCache = await fetchHistory();
+    const live = await fetchQuote();
+    const usdIls = await fetchUsdIls();
+    lastUsdIls = usdIls;
+    const {closes, highs, lows, opens} = historyCache;
+    if(closes.length < settings.maxSamples + settings.minSamples){
+      renderBanner('אין עדיין מספיק נתוני היסטוריה (בנרות שבועיים) - ה-P% עשוי להראות "אוסף נתונים" עד שיצטבר מספיק.', 'warn');
+    }
+    const {scores, lastResistance:lr, lastSupport:ls, atrArr, ema200Last, ema50Last, rsiLast} = computeScores(historyCache);
+    const currentScore = scores[scores.length-1];
+    const lastClose = live || closes[closes.length-1];
+    if(settings.exchangeRateOverride!=null){
+      lastUsdIls = settings.exchangeRateOverride; // calibrated once, applied to the live price continuously
+    }
+    lastCombinedScore = currentScore; lastResistance = lr; lastSupport = ls; lastAtr = atrArr[atrArr.length-1];
+    lastEma200 = ema200Last; lastEma50 = ema50Last; lastRsi = rsiLast;
+    drawMiniChart(historyCache, lastClose, chartZoomed ? 5 : 30);
+
+    const {hs,hm} = buildHorizon(scores, closes, settings.barsH1);
+    const st = matchStats(hs, hm, currentScore, settings.scoreBand);
+    const r0 = decide(st);
+    lastR0 = r0; lastKnownClose = lastClose;
+    renderSimpleMessage(r0, lastClose);
+    renderChangeStats(historyCache, lastClose, st, currentScore);
+    lastSt = st;
+
+    // ---- POSITION MONITOR (open/close, both directions) — direction from score, trend/zone/momentum framework required ----
+    const legDir = lastCombinedScore >= settings.scoreThreshold ? 'up' : lastCombinedScore <= -settings.scoreThreshold ? 'down' : null;
+    const mainAgrees = legDir!=null;
+    renderProbabilityMeter(st, currentScore, legDir, mainAgrees, r0);
+    monitorPosition(legDir, mainAgrees, lastClose, r0);
+
+
+    document.getElementById('livePrice').textContent = '$'+fmt(lastClose);
+    document.getElementById('statusLine').textContent = 'עודכן ' + new Date().toLocaleTimeString('he-IL');
+  }catch(err){
+    console.error(err);
+    if(err.message==='NO_KEY'){
+      renderBanner('הזיני מפתח Twelve Data במסך ההגדרות.', 'warn');
+    }else{
+      renderBanner('שגיאה במשיכת נתונים: ' + err.message, 'err');
+    }
+    document.getElementById('statusLine').textContent = 'שגיאה בעדכון';
+  }
+}
+
+function scheduleAutoRefresh(){
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(refreshAll, Math.max(1,settings.refreshMinutes)*60*1000);
+  if(liveTickTimer) clearInterval(liveTickTimer);
+  liveTickTimer = setInterval(liveTick, 60000); // moving candle + live price every 60s
+}
+
+// ============================================================
+// NAV / INIT
+// ============================================================
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view==='settings') fillSettingsForm();
+  });
+});
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  readSettingsForm();
+  await saveSettings();
+  document.querySelector('.nav-btn[data-view="dashboard"]').click();
+  refreshAll();
+  scheduleAutoRefresh();
+});
+document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+
+(async function init(){
+  if(location.protocol === 'file:'){
+    renderBanner('האפליקציה נפתחה כקובץ מקומי - הדפדפן חוסם בקשות רשת במצב הזה. פתחי אותה דרך כתובת אינטרנט (הקישור שקיבלת בצ\'אט) ואז "הוסף למסך הבית" מתוכה, במקום לפתוח קובץ שהורדת.', 'err');
+    document.getElementById('statusLine').textContent = 'נפתח כקובץ מקומי - נתונים חסומים';
+    return;
+  }
+  await loadSettings();
+  fillSettingsForm();
+  renderSpreadCard();
+  renderManualPriceCard();
+  await refreshAll();
+  scheduleAutoRefresh();
+})();
+</script>
+</body>
+</html>
