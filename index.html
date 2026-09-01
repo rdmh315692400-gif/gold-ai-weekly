@@ -200,6 +200,7 @@
 
       <div class="card" id="earlyCard" style="display:none; border-color:var(--gold-soft);">
         <div id="earlyMsg" style="font-size:16px; font-weight:700;"></div>
+        <button id="resetPosBtn" class="btn secondary" style="margin-top:10px;">🔄 אפס מעקב פוזיציה (אם לא ביצעת בפועל)</button>
       </div>
 
       <div class="card" id="simpleCard" style="border-color:var(--gold-soft);">
@@ -788,8 +789,8 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const structuralStop = entryDir==='up' ? rangeLow - lastAtr*0.2 : rangeHigh + lastAtr*0.2;
       const stopDist = Math.abs(lastClose - structuralStop);
       let targetDist = entryDir==='up'
-        ? (lastResistance && lastResistance>lastClose ? lastResistance-lastClose : stopDist*2)
-        : (lastSupport && lastSupport<lastClose ? lastClose-lastSupport : stopDist*2);
+        ? (lastResistance && lastResistance>lastClose && (lastResistance-lastClose)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-lastClose : stopDist*2)
+        : (lastSupport && lastSupport<lastClose && (lastClose-lastSupport)<=lastAtr*settings.maxZoneAtrMult ? lastClose-lastSupport : stopDist*2);
       if(targetDist < stopDist*2) targetDist = stopDist*2;
       const target = entryDir==='up' ? lastClose+targetDist : lastClose-targetDist;
       const risk = structuralStop;
@@ -930,8 +931,8 @@ function renderChangeStats(data, lastClose, st, currentScore){
   } else if(zoneEntryPrice!=null && lastAtr){
     const stopDist = lastAtr * settings.atrStopMult;
     let targetDist = scoreDir==='up'
-      ? (lastResistance && lastResistance>zoneEntryPrice ? lastResistance-zoneEntryPrice : stopDist*2)
-      : (lastSupport && lastSupport<zoneEntryPrice ? zoneEntryPrice-lastSupport : stopDist*2);
+      ? (lastResistance && lastResistance>zoneEntryPrice && (lastResistance-zoneEntryPrice)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-zoneEntryPrice : stopDist*2)
+      : (lastSupport && lastSupport<zoneEntryPrice && (zoneEntryPrice-lastSupport)<=lastAtr*settings.maxZoneAtrMult ? zoneEntryPrice-lastSupport : stopDist*2);
     if(targetDist < stopDist*2) targetDist = stopDist*2;
     barEntry = zoneEntryPrice;
     barTarget = scoreDir==='up' ? zoneEntryPrice+targetDist : zoneEntryPrice-targetDist;
@@ -1600,6 +1601,11 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   scheduleAutoRefresh();
 });
 document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+document.getElementById('resetPosBtn').addEventListener('click', ()=>{
+  savePosState({open:false});
+  renderBanner('מעקב הפוזיציה אופס - המערכת תחפש כניסה חדשה מאפס.', 'warn');
+  refreshAll();
+});
 
 (async function init(){
   if(location.protocol === 'file:'){
