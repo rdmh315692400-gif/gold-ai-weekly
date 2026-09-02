@@ -116,9 +116,9 @@
           <svg id="selfControlGauge" viewBox="0 0 200 110" style="width:220px;"></svg>
         </div>
         <div id="selfControlScoreLabel" style="text-align:center; font-weight:700; font-size:14px; margin-top:4px;"></div>
-        <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px;">
-          <span style="color:var(--down);">בעלת חוסר שליטה עצמית</span>
-          <span style="color:var(--up);">בעלת שליטה עצמית</span>
+        <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:2px; direction:ltr;">
+          <span style="color:var(--down); font-weight:700;">בעלת חוסר שליטה עצמית</span>
+          <span style="color:var(--up); font-weight:700;">בעלת שליטה עצמית</span>
         </div>
 
         <div id="selfControlDailyRow" style="display:none; border-top:1px solid var(--border); padding-top:10px; margin-top:12px;">
@@ -731,13 +731,16 @@ function drawSelfControlGauge(){
   const startRed = {x: cx-r, y: cy};
   const midTop = {x: cx, y: cy-r};
   const endGreen = {x: cx+r, y: cy};
+  // Text color must match the score's actual position on the red-to-green scale, not a fixed color.
+  const textColor = score==null ? '#9BA0AE' : score<40 ? '#B03A2A' : score>60 ? '#3FB68B' : '#C9A227';
   svg.innerHTML = `
     <path d="M ${startRed.x} ${startRed.y} A ${r} ${r} 0 0 1 ${midTop.x} ${midTop.y}" fill="none" stroke="#B03A2A" stroke-width="14" stroke-linecap="round"/>
     <path d="M ${midTop.x} ${midTop.y} A ${r} ${r} 0 0 1 ${endGreen.x} ${endGreen.y}" fill="none" stroke="#3FB68B" stroke-width="14" stroke-linecap="round"/>
     <line x1="${cx}" y1="${cy}" x2="${needleX}" y2="${needleY}" stroke="#fff" stroke-width="3"/>
     <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
-    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="20" font-weight="700" fill="#C9A227">${score==null?'-':Math.round(score)+'%'}</text>
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="20" font-weight="700" fill="${textColor}">${score==null?'-':Math.round(score)+'%'}</text>
   `;
+  label.style.color = textColor;
   label.textContent = score==null ? 'אין עדיין נתונים' : `ציון שליטה עצמית: ${Math.round(score)}/100`;
 }
 
@@ -961,11 +964,9 @@ function forcedClosureInfo(entry, target, risk, dirUp, oz){
   const pl = profitLossStats(entry, target, risk, dirUp, oz);
   const fullLossUsd = Math.abs(pl.lossIls) / lastUsdIls;
   const requiredBalanceUsd = maintenanceUsd + fullLossUsd;
-  // Professional 1-2% risk rule: recommended account size = full net loss at stop ÷ risk% —
-  // NOT a percentage of entry value or stop value, but of total account capital. This is a
-  // DIFFERENT number from requiredBalanceIls above (that one is about avoiding forced closure;
-  // this one is about proper position-sizing discipline).
-  const riskBasedCapitalIls = (fullLossUsd * lastUsdIls) / (settings.riskPercentPerTrade/100);
+  // Recommended capital = the full net loss at the stop itself (price + spread + commission +
+  // financing) — the actual amount at risk, not multiplied by a risk% factor.
+  const riskBasedCapitalIls = fullLossUsd * lastUsdIls;
   return {
     forcedPrice,
     requiredBalanceIls: requiredBalanceUsd * lastUsdIls,
@@ -990,7 +991,7 @@ function plLine(entry, target, risk, dirUp, oz){
       `<span style="color:var(--down); font-size:12px;">הפסד נטו בסגירה כפויה: -₪${fmt(Math.abs(forcedLossIls),0)}</span><br>` +
       `<div style="display:flex; align-items:center; gap:8px; margin:4px 0;"><span style="color:var(--gold); font-size:13px; font-weight:700;">מינימום למניעת סגירה כפויה (${oz} אונקיות): ₪${fmt(fc.requiredBalanceIls,0)}</span>` +
       `<button onclick="applyRecommendedBalance(${fc.requiredBalanceIls})" style="padding:4px 10px; border-radius:6px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-size:11px; cursor:pointer;">אשר סכום זה</button></div>` +
-      `<span style="color:var(--gold); font-size:13px; font-weight:700;">הון מומלץ לפי ${fmt(settings.riskPercentPerTrade,1)}% סיכון (${oz} אונקיות): ₪${fmt(fc.riskBasedCapitalIls,0)}</span><br>` +
+      `<span style="color:var(--gold); font-size:13px; font-weight:700;">הון מומלץ - ההפסד בסטופ (${oz} אונקיות): ₪${fmt(fc.riskBasedCapitalIls,0)}</span><br>` +
       `<span style="color:var(--text-dim); font-size:11px;">= הפסד נטו מלא בסטופ ÷ % הסיכון - סך ההון הכולל שאמור להיות לך, לא רק המרווח</span><br>`
     : '';
   return timeLine + fcLine +
@@ -1143,7 +1144,7 @@ function renderCalibrationBody(stats){
   }
   for(const regime in stats.byRegime){
     const r = stats.byRegime[regime];
-    const label = regime==='consolidation' ? 'פריצת דשדוש' : regime==='channel' ? 'פריצת ערוץ מגמה' : regime;
+    const label = regime==='consolidation' ? 'פריצת דשדוש' : regime==='channel' ? 'פריצת ערוץ מגמה' : regime==='structure' ? 'שבירת מבנה (CHoCH)' : regime;
     html += `<div style="font-size:12px; color:var(--text-dim);">${label}: ${r.wins}/${r.count} הצלחות (${fmt(r.count?r.wins/r.count*100:0,0)}%)</div>`;
   }
   html += `<div style="font-weight:700; color:var(--gold); margin-top:8px;">דיוק לפי מוח</div>`;
@@ -1230,14 +1231,16 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 
   const probLine = (r0 && r0.prob!=null) ? `הסתברות P%: ${fmt(r0.prob,1)}%` : `הסתברות P%: אוספת עדיין נתונים`;
 
-  // Breakout up = new/starting UP trend after consolidation OR a trend-channel breakout.
-  // Two independent professional-style calculations, either one can trigger.
+  // Breakout up = new/starting UP trend after consolidation, a trend-channel breakout, OR a
+  // swing-structure break (CHoCH). Three independent professional-style calculations, any can trigger.
   const consolBreakoutUp = checkConsolidationBreakout('up');
   const consolBreakoutDown = checkConsolidationBreakout('down');
   const channelBreakoutUp = checkTrendChannelBreakout('up');
   const channelBreakoutDown = checkTrendChannelBreakout('down');
-  const breakoutUp = consolBreakoutUp || channelBreakoutUp;
-  const breakoutDown = consolBreakoutDown || channelBreakoutDown;
+  const structBreakoutUp = checkSwingStructureBreakout('up');
+  const structBreakoutDown = checkSwingStructureBreakout('down');
+  const breakoutUp = consolBreakoutUp || channelBreakoutUp || structBreakoutUp;
+  const breakoutDown = consolBreakoutDown || channelBreakoutDown || structBreakoutDown;
   // The breakout only becomes a real "entry probability" when the P% engine doesn't actively
   // contradict it (enough samples AND pointing the opposite way) — matching real data, not just the pattern alone.
   const probContradictsUp = r0 && r0.enough && r0.dir==='down';
@@ -1254,6 +1257,7 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const n = historyCache.closes.length;
       const lookback = settings.consolidationLookback;
       const isConsolTrigger = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
+      const isChannelTrigger = entryDir==='up' ? channelBreakoutUp : channelBreakoutDown;
       let structuralStop;
       if(isConsolTrigger){
         const startIdx = n - 1 - lookback, endIdx = n - 1;
@@ -1262,13 +1266,19 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
         // Stop placed at the OTHER side of the consolidation range that was just broken —
         // if price falls back into the range, the breakout has failed.
         structuralStop = entryDir==='up' ? rangeLow - lastAtr*0.2 : rangeHigh + lastAtr*0.2;
-      } else {
+      } else if(isChannelTrigger){
         // Channel-triggered entry: the stop belongs at the channel's OWN boundary (the line that
         // was broken), not an unrelated flat range — a fall back below/above that line means the
         // channel breakout has failed, which is the real invalidation point here.
         const ch = computeTrendChannel();
         const side = entryDir===(ch && ch.dirUp ? 'up':'down') ? 'opposite' : 'base';
         structuralStop = ch ? channelLineValueAt(ch, n-1, side) + (entryDir==='up' ? -lastAtr*0.2 : lastAtr*0.2)
+          : (entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult);
+      } else {
+        // Structure-break (CHoCH) triggered entry: the stop belongs at the dividing line itself —
+        // if price falls back across it, the structure break has failed/reversed again.
+        const s = computeSwingStructure();
+        structuralStop = s ? (entryDir==='up' ? s.dividingLine - lastAtr*0.2 : s.dividingLine + lastAtr*0.2)
           : (entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult);
       }
       const stopDist = Math.abs(lastClose - structuralStop);
@@ -1294,11 +1304,16 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 
       savePosState({open:true, dir:entryDir, entry:lastClose, target, risk});
       const isConsolBreakoutForLog = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
-      logTradeEntry(entryDir, lastClose, target, risk, isConsolBreakoutForLog?'consolidation':'channel', m1, m2, m3, cmp);
+      const isChannelBreakoutForLog = entryDir==='up' ? channelBreakoutUp : channelBreakoutDown;
+      const regimeForLog = isConsolBreakoutForLog ? 'consolidation' : isChannelBreakoutForLog ? 'channel' : 'structure';
+      logTradeEntry(entryDir, lastClose, target, risk, regimeForLog, m1, m2, m3, cmp);
       renderThreeMindsCard();
-      const isConsolBreakout = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
+      const isConsolBreakout = isConsolBreakoutForLog;
+      const isChannelBreakout = isChannelBreakoutForLog;
       const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה' : '🔴 SHORT (מכירה) — פריצה';
-      const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות שבועיים` : `פריצת ערוץ מגמה (קו מגמה אלכסוני)`;
+      const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות שבועיים`
+        : isChannelBreakout ? `פריצת ערוץ מגמה (קו מגמה אלכסוני)`
+        : `שבירת מבנה שוק (CHoCH)`;
       document.getElementById('earlyMsg').innerHTML = `${dirLabel}<br>` +
         `<span style="color:var(--up)">כניסה בשער ${fmt(lastClose)}</span><br>` +
         `<span style="color:var(--gold)">יעד סגירה: ${fmt(target)}</span><br>` +
@@ -1307,7 +1322,7 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
         plLine(lastClose, target, risk, entryDir==='up') + `<br>` +
         `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
       earlyCard.style.display = 'block';
-      notify('Gold AI - פתחי פוזיציה', `${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)} — פריצת דשדוש`);
+      notify('Gold AI - פתחי פוזיציה', `${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)} — ${sourceLabel}`);
     } else {
       earlyCard.style.display = 'none';
       lastThreeMinds = null;
@@ -1358,6 +1373,53 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 // channel — a regression line through the lows (uptrend) or highs (downtrend) of the recent
 // closed candles, plus a parallel line offset by the largest deviation on the opposite side.
 // Shared by the chart (visual) and the logic (breakout check) so they can never disagree.
+// Swing structure: segments recent closed candles into "legs" (consecutive same-direction runs),
+// and checks whether the opposing leg's extreme crosses the START (open) of the PRECEDING leg —
+// the professional structure-break / Change-of-Character check. E.g. in a downtrend: a bounce
+// (green leg) that stays below the open of the red leg before it = trend intact (just a pullback).
+// A bounce that crosses above it = Change of Character (reversal signal).
+function computeSwingStructure(){
+  if(!historyCache) return null;
+  const n = historyCache.closes.length;
+  const lookback = Math.min(30, n);
+  if(lookback < 4) return null;
+  const opens=historyCache.opens, closes=historyCache.closes, highs=historyCache.highs, lows=historyCache.lows;
+  const startIdx = n-lookback;
+  // Build legs: consecutive same-direction (close>=open -> 'up', else 'down') candles
+  const legs = [];
+  for(let i=startIdx; i<n; i++){
+    const dir = closes[i]>=opens[i] ? 'up' : 'down';
+    const last = legs[legs.length-1];
+    if(last && last.dir===dir){
+      last.high = Math.max(last.high, highs[i]);
+      last.low = Math.min(last.low, lows[i]);
+      last.endIdx = i;
+    } else {
+      legs.push({dir, startIdx:i, endIdx:i, startOpen:opens[i], high:highs[i], low:lows[i]});
+    }
+  }
+  if(legs.length < 2) return null;
+  const currentLeg = legs[legs.length-1];
+  const prevLeg = legs[legs.length-2];
+  // The dividing line = the open of the FIRST candle in the leg before the current one
+  const dividingLine = prevLeg.startOpen;
+  let structureBroken = false;
+  if(prevLeg.dir==='down' && currentLeg.dir==='up'){
+    structureBroken = currentLeg.high > dividingLine; // bounce crossed above the prior leg's start = CHoCH up
+  } else if(prevLeg.dir==='up' && currentLeg.dir==='down'){
+    structureBroken = currentLeg.low < dividingLine; // pullback crossed below the prior leg's start = CHoCH down
+  }
+  const trendDir = prevLeg.dir==='down' ? 'down' : 'up'; // the established trend, before the current opposing leg
+  return { legs, currentLeg, prevLeg, dividingLine, structureBroken, trendDir, startIdxAbs:prevLeg.startIdx };
+}
+
+function checkSwingStructureBreakout(direction){
+  const s = computeSwingStructure();
+  if(!s || !s.structureBroken) return false;
+  if(direction==='up') return s.prevLeg.dir==='down'; // established downtrend, bounce broke above = bullish CHoCH
+  return s.prevLeg.dir==='up'; // established uptrend, pullback broke below = bearish CHoCH
+}
+
 function computeTrendChannel(){
   if(!historyCache || !lastAtr) return null;
   const n = historyCache.closes.length;
@@ -1633,7 +1695,7 @@ function renderChangeStats(data, lastClose, st, currentScore){
         (fcN ? `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">שער סגירה כפויה (יתרה נוכחית)</span><span style="color:${fcN.safeFromForcedClosure?'var(--text-dim)':'var(--down)'};">${fmt(fcN.forcedPrice)}${fcN.safeFromForcedClosure?'':' ⚠️'}</span></div>` +
         `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הפסד נטו בסגירה כפויה</span><span style="color:var(--down);">-₪${fmt(Math.abs(profitLossStats(barEntry, barTarget, fcN.forcedPrice, barDirUp, oz).lossIls),0)}</span></div>` +
         `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">מינימום למניעת סגירה כפויה</span><span style="color:var(--gold);">₪${fmt(fcN.requiredBalanceIls,0)}</span></div>` +
-        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הון מומלץ (${fmt(settings.riskPercentPerTrade,1)}% סיכון)</span><span style="color:var(--gold); font-weight:700;">₪${fmt(fcN.riskBasedCapitalIls,0)}</span></div>` : '') +
+        `<div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:var(--text-dim);">הון מומלץ (הפסד בסטופ)</span><span style="color:var(--gold); font-weight:700;">₪${fmt(fcN.riskBasedCapitalIls,0)}</span></div>` : '') +
       `</div>`;
     });
     document.getElementById('capSizeTable').innerHTML = sizeHtml;
@@ -1688,6 +1750,8 @@ function drawMiniChart(data, livePrice, count=30){
   if(!isConsolidating){
     trendCh = computeTrendChannel();
   }
+  // Swing structure (Break-of-Structure / Change-of-Character dividing line) — independent overlay
+  const swingStruct = computeSwingStructure();
 
   let maxV = Math.max(...hSlice, rangeHigh||0);
   let minV = Math.min(...lSlice, rangeLow!=null?rangeLow:Infinity);
@@ -1699,6 +1763,10 @@ function drawMiniChart(data, livePrice, count=30){
     ];
     maxV = Math.max(maxV, ...vals);
     minV = Math.min(minV, ...vals);
+  }
+  if(swingStruct){
+    maxV = Math.max(maxV, swingStruct.dividingLine);
+    minV = Math.min(minV, swingStruct.dividingLine);
   }
   const pad = (maxV-minV)*0.1 || 1;
   maxV += pad; minV -= pad;
@@ -1756,8 +1824,8 @@ function drawMiniChart(data, livePrice, count=30){
     ctx.setLineDash([]);
     ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
     let label, labelColor;
-    if(breakoutDir==='up'){ label='🟢 פריצה למעלה!'; labelColor='#3FB68B'; }
-    else if(breakoutDir==='down'){ label='🔴 פריצה למטה!'; labelColor='#B03A2A'; }
+    if(breakoutDir==='up'){ label='🟢 פריצת דשדוש - היפוך מגמה למעלה!'; labelColor='#3FB68B'; }
+    else if(breakoutDir==='down'){ label='🔴 פריצת דשדוש - היפוך מגמה למטה!'; labelColor='#B03A2A'; }
     else { label='⚪ דשדוש'; labelColor='#A878FF'; }
     ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, yHigh-6)));
   } else {
@@ -1778,13 +1846,40 @@ function drawMiniChart(data, livePrice, count=30){
       ctx.setLineDash([]);
       const chBreakUp = checkTrendChannelBreakout('up');
       const chBreakDown = checkTrendChannelBreakout('down');
+      const candleUp = livePrice >= liveOpen;
+      // Pending check: is the LIVE price beyond the line right now, even if not yet confirmed by
+      // a closed candle (requireCloseBreakout)? Shown so the chart never silently says "uptrend"
+      // while a candle is visibly poking through the line.
+      const pendBuffer = lastAtr * settings.breakoutBufferAtrMult;
+      const baseAtLive = channelLineValueAt(ch, fullHistN, 'base');
+      const oppAtLive = channelLineValueAt(ch, fullHistN, 'opposite');
+      const pendingUp = ch.dirUp ? livePrice > oppAtLive + pendBuffer : livePrice > baseAtLive + pendBuffer;
+      const pendingDown = ch.dirUp ? livePrice < baseAtLive - pendBuffer : livePrice < oppAtLive - pendBuffer;
       ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left';
       let label, labelColor;
-      if(chBreakUp){ label='🟢 פריצת ערוץ למעלה!'; labelColor='#3FB68B'; }
-      else if(chBreakDown){ label='🔴 פריצת ערוץ למטה!'; labelColor='#B03A2A'; }
-      else { label = ch.dirUp ? '📈 ערוץ מגמה עולה' : '📉 ערוץ מגמה יורד'; labelColor='#A878FF'; }
+      if(chBreakUp){ label='🟢 פריצת מגמה - היפוך למעלה!'; labelColor='#3FB68B'; }
+      else if(chBreakDown){ label='🔴 פריצת מגמה - היפוך למטה!'; labelColor='#B03A2A'; }
+      else if(pendingUp || pendingDown){ label='⚠️ פריצה אפשרית - ממתין לאישור סגירת נר'; labelColor='#E2604F'; }
+      else if(ch.dirUp && !candleUp){ label='🟡 תוך מגמה עולה (נר יורד, לא שובר)'; labelColor='#C9A227'; }
+      else if(!ch.dirUp && candleUp){ label='🟡 תוך מגמה יורדת (נר עולה, לא שובר)'; labelColor='#C9A227'; }
+      else { label = ch.dirUp ? '📈 מגמה עולה' : '📉 מגמה יורדת'; labelColor='#A878FF'; }
       ctx.fillStyle = labelColor; ctx.fillText(label, leftPad, Math.max(14, Math.min(H-6, Math.min(yBaseStart,yOppStart)-6)));
     }
+  }
+
+  // Swing structure line (Break-of-Structure / Change-of-Character) — always drawn when available,
+  // layered on top of whichever primary overlay (horizontal range or diagonal channel) is showing.
+  if(swingStruct){
+    const yLine = scaleY(swingStruct.dividingLine);
+    const xLineStart = idxToX(swingStruct.startIdxAbs);
+    ctx.strokeStyle = swingStruct.structureBroken ? 'rgba(226,96,79,.8)' : 'rgba(0,200,255,.6)';
+    ctx.setLineDash([2,4]); ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(Math.max(leftPad,xLineStart), yLine); ctx.lineTo(W, yLine); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    const structLabel = swingStruct.structureBroken ? '⚠️ שבירת מבנה (CHoCH)' : 'קו מבנה';
+    ctx.fillStyle = swingStruct.structureBroken ? '#E2604F' : '#00C8FF';
+    ctx.fillText(structLabel, leftPad, yLine - 4);
   }
 
   if(livePrice){
