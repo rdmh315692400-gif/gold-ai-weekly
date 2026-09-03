@@ -403,10 +403,13 @@ let chartZoomed = false;
 // Persistent tracking of the CURRENT still-forming week's true high/low, accumulated across
 // every price tick (not recalculated fresh each draw) — so the live candle keeps its wick even
 // if price already pulled back from an earlier high/low reached earlier in the week.
-let liveCandleOpenRef = null, liveCandleHigh = null, liveCandleLow = null;
-function updateLiveCandleRange(openPrice, livePrice){
-  if(liveCandleOpenRef !== openPrice){
-    // a new week started (the reference open changed) — reset tracking
+let liveCandleOpenRef = null, liveCandleHigh = null, liveCandleLow = null, liveCandleHistLen = null;
+function updateLiveCandleRange(openPrice, livePrice, histLen){
+  // Reset ONLY when a real new week started (the history array actually grew by one candle) —
+  // NOT on tiny floating-point rounding differences in the refetched close price, which would
+  // otherwise wipe out the tracked high/low every ~15 minutes when history is refetched.
+  if(liveCandleHistLen !== histLen){
+    liveCandleHistLen = histLen;
     liveCandleOpenRef = openPrice;
     liveCandleHigh = Math.max(openPrice, livePrice);
     liveCandleLow = Math.min(openPrice, livePrice);
@@ -643,30 +646,53 @@ function buildHorizon(scores, closes, bars){
 // ============================================================
 async function fetchHistory(){
   if(!settings.apiKey){ throw new Error('NO_KEY'); }
-  // Weekly candles: Twelve Data supports "1week" natively, so no manual boundary-hour
-  // aggregation is needed here (unlike the 4H version, which had to match Plus500's exact
-  // daily reset hours). We just pull native weekly bars directly.
-  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1week&outputsize=500&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
+  // Weekly candles: Plus500 resets the week every SUNDAY at 01:00 Israel time — this does NOT
+  // necessarily match Twelve Data's native "1week" bars (which follow their own convention). So
+  // we build the weekly candle ourselves from DAILY bars (timezone=Asia/Jerusalem, which the API
+  // converts for us — including DST shifts automatically, since we're grouping by the LOCAL
+  // Israel calendar day, not a manually-computed UTC offset).
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1day&outputsize=2500&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
   const res = await fetch(url);
   const json = await res.json();
   if(json.status==='error' || !json.values) throw new Error(json.message || 'FETCH_ERROR');
-  const weekly = json.values.slice().reverse(); // oldest -> newest
+  const daily = json.values.slice().reverse(); // oldest -> newest, each {datetime, open, high, low, close, volume}
 
-  // The most recent bar may be the still-forming current week — the app tracks that live
-  // separately (via the live-price tick), so history should only contain CLOSED weekly candles.
-  const now = new Date();
-  const closedBars = weekly.filter(bar => {
-    const barDate = new Date(bar.datetime.replace(' ', 'T'));
-    const daysSince = (now - barDate) / 86400000;
-    return daysSince >= 7; // a full week has actually elapsed since this bar's open
-  });
+  const groups = [];
+  let current = null;
+  for(const bar of daily){
+    const d = new Date(bar.datetime.replace(' ', 'T'));
+    const isSunday = d.getDay() === 0; // 0 = Sunday, the week's reset day
+    if(isSunday || !current){
+      if(current) groups.push(current);
+      current = { open: parseFloat(bar.open), high: parseFloat(bar.high), low: parseFloat(bar.low), close: parseFloat(bar.close), volume: bar.volume?parseFloat(bar.volume):0, days:1, datetime: bar.datetime };
+    } else {
+      current.high = Math.max(current.high, parseFloat(bar.high));
+      current.low = Math.min(current.low, parseFloat(bar.low));
+      current.close = parseFloat(bar.close);
+      current.volume += bar.volume?parseFloat(bar.volume):0;
+      current.days += 1;
+    }
+  }
+  if(current) groups.push(current);
+  // Drop the last group if it isn't a full week yet (still forming) — the app tracks the live
+  // price separately, so history should only contain CLOSED weekly candles.
+  // A closed week spans a full 7 CALENDAR days from its Sunday start (even though only ~5 of
+  // those are trading days — Sun 01:00 to Fri 00:00, per Plus500's actual hours). Checking
+  // trading-day count here would be wrong (always <7) and wrongly drop the last complete week —
+  // check elapsed calendar time since that week's start instead.
+  let closedGroups = groups;
+  if(groups.length){
+    const lastGroupStart = new Date(groups[groups.length-1].datetime.replace(' ','T'));
+    const daysSinceStart = (new Date() - lastGroupStart) / 86400000;
+    if(daysSinceStart < 7) closedGroups = groups.slice(0,-1);
+  }
 
   return {
-    closes: closedBars.map(v=>parseFloat(v.close)),
-    highs: closedBars.map(v=>parseFloat(v.high)),
-    lows: closedBars.map(v=>parseFloat(v.low)),
-    opens: closedBars.map(v=>parseFloat(v.open)),
-    volumes: closedBars.map(v=>v.volume?parseFloat(v.volume):0),
+    closes: closedGroups.map(g=>g.close),
+    highs: closedGroups.map(g=>g.high),
+    lows: closedGroups.map(g=>g.low),
+    opens: closedGroups.map(g=>g.open),
+    volumes: closedGroups.map(g=>g.volume),
   };
 }
 async function fetchQuote(){
@@ -1716,7 +1742,7 @@ function drawMiniChart(data, livePrice, count=30){
 
   const prevClose = data.closes[data.closes.length-1];
   const liveOpen = prevClose;
-  updateLiveCandleRange(liveOpen, livePrice);
+  updateLiveCandleRange(liveOpen, livePrice, data.closes.length);
   const liveHigh = liveCandleHigh;
   const liveLow = liveCandleLow;
 
