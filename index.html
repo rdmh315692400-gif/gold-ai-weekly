@@ -178,9 +178,12 @@
           <div style="position:relative; height:26px; border-radius:8px; overflow:hidden; background:rgba(122,128,144,.2); direction:ltr;">
             <div id="tgGreenZone" style="position:absolute; top:0; bottom:0; background:rgba(63,182,139,.35);"></div>
             <div id="tgRedZone" style="position:absolute; top:0; bottom:0; background:rgba(226,96,79,.35);"></div>
+            <div id="tgMilestones"></div>
             <div id="tgEntryMark" style="position:absolute; top:0; bottom:0; width:2px; background:var(--gold);"></div>
-            <div id="tgNowMark" style="position:absolute; top:0; bottom:0; width:2px; background:#fff;"></div>
+            <div id="tgPeakMark" style="position:absolute; top:0; bottom:0; width:4px; background:#fff; display:none;"></div>
+            <div id="tgNowMark" style="position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.7);"></div>
           </div>
+          <div id="tgMilestoneLabels" style="position:relative; height:14px; font-size:9px; margin-top:2px; direction:ltr; color:var(--text-dim);"></div>
           <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:3px; direction:ltr;">
             <span id="tgLeftEdgeLabel" style="color:var(--down);">סטופ</span>
             <span id="tgRightEdgeLabel" style="color:var(--up);">יעד</span>
@@ -337,7 +340,7 @@
         <label>סף ציון משולב לאישור כניסה (±)</label>
         <input type="number" id="scoreThreshold" value="5" step="0.5">
         <label>נרות אחורה לזיהוי דשדוש (Consolidation)</label>
-        <input type="number" id="consolidationLookback" value="6" step="1">
+        <input type="number" id="consolidationLookback" value="4" step="1">
         <label>טווח מקסימלי שנחשב דשדוש (מכפיל ATR)</label>
         <input type="number" id="consolidationMaxRangeAtrMult" value="2.0" step="0.1">
         <label>מרווח אישור פריצה (מכפיל ATR)</label>
@@ -347,7 +350,7 @@
             <input type="checkbox" id="requireCloseBreakout" checked>
             <span class="slider"></span>
           </span>
-          <span>דרוש סגירת נר לאישור פריצה (לא רק מחיר חי - פחות איתותי שווא, תגובה איטית יותר)</span>
+          <span>דרוש סגירת נר לאישור פריצה - רק לערוץ מגמה/שבירת מבנה (בתוך מגמה). פריצת דשדוש (תחילת מהלך) תמיד מיידית, על מחיר חי.</span>
         </label>
         <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
           <span class="switch" style="display:inline-block;">
@@ -411,7 +414,7 @@ const DEFAULTS = {
   srProximityPts:3, atrStopMult:1.0, maxZoneAtrMult:15, overnightBuyPct:-0.0319, overnightSellPct:-0.0120, accountBalanceIls:1000,
   manualPriceOverride:null, manualPriceOverrideIls:null, manualMarginOverride:null, manualMarginOverrideIls:null,
   marginRatio:null, exchangeRateOverride:null,
-  consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
+  consolidationLookback:4, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
   requireVolumeConfirmation:false, volumeConfirmMult:1.5,
   calibMinTrades:15, channelStopCapAtrMult:3.0, accelerationRsiCap:70
 };
@@ -561,6 +564,7 @@ function pivotHighLow(highs, lows, lookback){
   }
   return {ph, pl};
 }
+
 
 // ============================================================
 // SCORE ENGINE (mirrors the Pine Script layers)
@@ -946,7 +950,7 @@ function runPostTradeReview(trade){
     if(trade.m1conf>=70) reasons.push(success ? 'מוח 1 (ביטחון גבוה) - הביטחון הצדיק את עצמו' : 'מוח 1 (ביטחון גבוה) - הערכת יתר, לא הצדיק את עצמו הפעם');
     else if(trade.m1conf<60 && success) reasons.push('מוח 1 היה זהיר יחסית, אך העסקה הצליחה בכל זאת');
   }
-  const regimeLabel = trade.regime==='consolidation' ? 'פריצת דשדוש' : trade.regime==='channel' ? 'פריצת ערוץ מגמה' : trade.regime==='structure' ? 'שבירת מבנה (CHoCH)' : trade.regime;
+  const regimeLabel = trade.regime==='consolidation' ? 'פריצת דשדוש' : trade.regime==='channel' ? 'פריצת ערוץ מגמה' : trade.regime==='structure' ? 'שבירת מבנה (CHoCH)' : trade.regime==='continuation' ? 'המשך מגמה' : trade.regime;
   if(regimeLabel) reasons.push(`נכנס לפי: ${regimeLabel}`);
   return { success, pct: trade.actualPct, reasons };
 }
@@ -1012,28 +1016,38 @@ function runHistoricalBacktest(){
   }
 
   const trades = [];
+  const consolOpportunities = []; // tracks EVERY raw consolidation breakout signal, and whether a position slot was free — using the exact same check as the real entry gate, no separate diagnostic logic
   let openPos = null;
 
   for(let i=minStart; i<n; i++){
     setStateAtIndex(i);
     if(!lastAtr) continue;
 
+    // Track EVERY raw consolidation breakout opportunity — same function call the real gate
+    // uses — regardless of what happens next, so we can see exactly why some don't become trades.
+    const rawConsolUp = checkConsolidationBreakout('up');
+    const rawConsolDown = checkConsolidationBreakout('down');
+    if(rawConsolUp || rawConsolDown){
+      consolOpportunities.push({week:i, occupied: openPos!=null, dir: rawConsolUp?'up':'down'});
+    }
+
     if(openPos){
       const hi=fullHighs[i], lo=fullLows[i], cl=fullCloses[i];
       // Track the best price reached in our favor so far, even if the trade ultimately failed —
       // shows whether it was a near-miss or never got anywhere close to the target.
       openPos.maxFavorable = openPos.dir==='up' ? Math.max(openPos.maxFavorable, hi) : Math.min(openPos.maxFavorable, lo);
+      const effStop = computeLadderedStop(openPos);
       let hitTarget, hitStop;
-      if(openPos.dir==='up'){ hitTarget = hi>=openPos.target; hitStop = cl<=openPos.risk; }
-      else { hitTarget = lo<=openPos.target; hitStop = cl>=openPos.risk; }
-      const revUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up');
-      const revDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down');
+      if(openPos.dir==='up'){ hitTarget = hi>=openPos.target; hitStop = cl<=effStop; }
+      else { hitTarget = lo<=openPos.target; hitStop = cl>=effStop; }
+      const revUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up') || checkTrendContinuationEntry('up');
+      const revDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down') || checkTrendContinuationEntry('down');
       const trendEnding = openPos.dir==='up' ? revDown : revUp;
 
       let outcome=null, exitPrice=null;
-      if(hitTarget && hitStop){ outcome='sl'; exitPrice=openPos.risk; } // ambiguous same-week order — conservative
+      if(hitTarget && hitStop){ outcome='sl'; exitPrice=effStop; } // ambiguous same-week order — conservative
       else if(hitTarget){ outcome='tp'; exitPrice=openPos.target; }
-      else if(hitStop){ outcome='sl'; exitPrice=openPos.risk; }
+      else if(hitStop){ outcome='sl'; exitPrice=effStop; }
       else if(trendEnding){ outcome='reversal'; exitPrice=cl; }
 
       if(outcome){
@@ -1053,9 +1067,9 @@ function runHistoricalBacktest(){
       continue;
     }
 
-    // Entry check — the EXACT same 3-mechanism signal used live
-    const bUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up');
-    const bDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down');
+    // Entry check — the EXACT same 4-mechanism signal used live
+    const bUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up') || checkTrendContinuationEntry('up');
+    const bDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down') || checkTrendContinuationEntry('down');
     if(!bUp && !bDown) continue;
     let entryDir = bUp ? 'up' : 'down';
 
@@ -1075,24 +1089,34 @@ function runHistoricalBacktest(){
       }
     }
 
-    // P% gate — same historical-similarity engine used live
+    // P% gate — same historical-similarity engine used live. SKIPPED for a raw consolidation
+    // breakout (start of a trend — no additional consideration by design).
     const {hs,hm} = buildHorizon(lastScoresArr, historyCache.closes, settings.barsH1);
     const st = matchStats(hs, hm, lastCombinedScore, settings.scoreBand);
     const r0 = decide(st);
+    const isConsolTriggerEarly = entryDir==='up' ? checkConsolidationBreakout('up') : checkConsolidationBreakout('down');
     const probContradicts = r0 && r0.enough && ((entryDir==='up'&&r0.dir==='down')||(entryDir==='down'&&r0.dir==='up'));
-    if(probContradicts) continue;
+    if(!isConsolTriggerEarly && probContradicts) continue;
 
     // Structural stop + target — same logic as the live entry branch
     const closeI = fullCloses[i];
     const isConsolTrigger = entryDir==='up' ? checkConsolidationBreakout('up') : checkConsolidationBreakout('down');
     const isChannelTrigger = entryDir==='up' ? checkTrendChannelBreakout('up') : checkTrendChannelBreakout('down');
-    let structuralStop, regime, channelType=null;
+    const isStructTrigger = entryDir==='up' ? checkSwingStructureBreakout('up') : checkSwingStructureBreakout('down');
+    let structuralStop, regime, channelType=null, entryPriceUsed=closeI;
     const n2 = historyCache.closes.length;
     if(isConsolTrigger){
       const s2=n2-1-lookback, e2=n2-1;
       const rH=Math.max(...historyCache.highs.slice(s2,e2)), rL=Math.min(...historyCache.lows.slice(s2,e2));
       structuralStop = entryDir==='up' ? rL-lastAtr*0.2 : rH+lastAtr*0.2;
       regime='consolidation';
+      // Consolidation breakouts fire on LIVE price, not the week's close (see live code). Weekly
+      // history only has O/H/L/C, not the exact intra-week crossing moment — the boundary+buffer
+      // level itself is the most realistic estimate of where that live entry would have happened
+      // (using the week's close would understate the benefit; using the week's extreme would
+      // overstate it by assuming we caught the single best moment).
+      const buffer = lastAtr*settings.breakoutBufferAtrMult;
+      entryPriceUsed = entryDir==='up' ? rH+buffer : rL-buffer;
     } else if(isChannelTrigger){
       const ch = computeTrendChannel();
       const side = entryDir===(ch&&ch.dirUp?'up':'down') ? 'opposite':'base';
@@ -1106,30 +1130,48 @@ function runHistoricalBacktest(){
       regime='channel';
       // acceleration = breaking out FURTHER in the trend's own direction; reversal = breaking back against it
       channelType = ch ? ((ch.dirUp && entryDir==='up') || (!ch.dirUp && entryDir==='down') ? 'האצה (עם המגמה)' : 'היפוך (נגד המגמה)') : null;
-    } else {
+    } else if(isStructTrigger){
       const s = computeSwingStructure();
-      structuralStop = s ? (entryDir==='up'?s.dividingLine-lastAtr*0.2:s.dividingLine+lastAtr*0.2) : (entryDir==='up'?closeI-lastAtr:closeI+lastAtr);
+      let structStop = s ? (entryDir==='up'?s.dividingLine-lastAtr*0.2:s.dividingLine+lastAtr*0.2) : (entryDir==='up'?closeI-lastAtr:closeI+lastAtr);
+      const structStopDist = Math.abs(closeI-structStop);
+      if(structStopDist > lastAtr*settings.channelStopCapAtrMult){
+        structStop = entryDir==='up' ? closeI-lastAtr*settings.atrStopMult : closeI+lastAtr*settings.atrStopMult;
+      }
+      structuralStop = structStop;
       regime='structure';
+    } else {
+      // Trend-continuation: stop below/above the pullback candle's own extreme
+      const pullbackIdx = n2-1;
+      structuralStop = entryDir==='up'
+        ? historyCache.lows[pullbackIdx] - lastAtr*0.2
+        : historyCache.highs[pullbackIdx] + lastAtr*0.2;
+      regime='continuation';
+      // Continuation fires on LIVE price (see live code), not the week's close — same realistic
+      // approximation used for consolidation: the pullback-open+buffer level, not the full close.
+      const buffer = lastAtr*settings.breakoutBufferAtrMult;
+      entryPriceUsed = entryDir==='up' ? historyCache.opens[pullbackIdx]+buffer : historyCache.opens[pullbackIdx]-buffer;
     }
-    const stopDist = Math.abs(closeI-structuralStop);
+    const stopDist = Math.abs(entryPriceUsed-structuralStop);
     let targetDist = entryDir==='up'
-      ? (lastResistance && lastResistance>closeI && (lastResistance-closeI)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-closeI : stopDist*2)
-      : (lastSupport && lastSupport<closeI && (closeI-lastSupport)<=lastAtr*settings.maxZoneAtrMult ? closeI-lastSupport : stopDist*2);
+      ? (lastResistance && lastResistance>entryPriceUsed && (lastResistance-entryPriceUsed)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-entryPriceUsed : stopDist*2)
+      : (lastSupport && lastSupport<entryPriceUsed && (entryPriceUsed-lastSupport)<=lastAtr*settings.maxZoneAtrMult ? entryPriceUsed-lastSupport : stopDist*2);
     if(targetDist<stopDist*2) targetDist=stopDist*2;
-    const target = entryDir==='up' ? closeI+targetDist : closeI-targetDist;
+    const target = entryDir==='up' ? entryPriceUsed+targetDist : entryPriceUsed-targetDist;
     const risk = structuralStop;
 
-    // Independent Risk/Crash Engine — same absolute veto used live
-    if(!runRiskCrashEngine().safe) continue;
+    // Independent Risk/Crash Engine — SKIPPED for a raw consolidation breakout (no additional
+    // consideration by design). Still an absolute veto for channel/structure entries.
+    if(!isConsolTrigger && !runRiskCrashEngine().safe) continue;
 
-    // 3 Minds + Comparison Engine — same functions used live
-    const m1 = runMind1Predictor(closeI, target, risk, entryDir==='up', r0, lastCombinedScore);
-    const m2 = runMind2Challenger(entryDir==='up', closeI, target, risk);
-    const m3 = runMind3BrokerSim(closeI, target, risk, entryDir==='up', settings.posSize||1);
+    // 3 Minds + Comparison Engine — same functions used live; skipped as a GATE for consolidation
+    // entries (still computed for logging/analysis).
+    const m1 = runMind1Predictor(entryPriceUsed, target, risk, entryDir==='up', r0, lastCombinedScore);
+    const m2 = runMind2Challenger(entryDir==='up', entryPriceUsed, target, risk);
+    const m3 = runMind3BrokerSim(entryPriceUsed, target, risk, entryDir==='up', settings.posSize||1);
     const cmp = runComparisonEngine(m1, m2, m3);
-    if(cmp.hardBlock || cmp.agreementScore < cmp.entryThreshold) continue;
+    if(!isConsolTrigger && (cmp.hardBlock || cmp.agreementScore < cmp.entryThreshold)) continue;
 
-    openPos = {dir:entryDir, entry:closeI, target, risk, entryIdx:i, regime, channelType, m1conf:m1.confidence, cmpScore:cmp.agreementScore, maxFavorable:closeI};
+    openPos = {dir:entryDir, entry:entryPriceUsed, target, risk, entryIdx:i, regime, channelType, m1conf:m1.confidence, cmpScore:cmp.agreementScore, maxFavorable:entryPriceUsed};
   }
 
   // Restore the REAL current global state
@@ -1138,12 +1180,15 @@ function runHistoricalBacktest(){
   lastCombinedScore = saved.lastCombinedScore; lastKnownClose = saved.lastKnownClose;
   lastScoresArr = saved.lastScoresArr; lastEma200 = saved.lastEma200; lastEma50 = saved.lastEma50;
 
-  const wins = trades.filter(t=>t.outcome==='tp').length;
+  // "Win" = actually net profitable, NOT just "hit the technical target" — with the milestone
+  // ladder stop, a "stop" exit can still be profitable (the stop may have already moved into
+  // profit territory). Judging by outcome==='tp' alone would understate real performance.
+  const wins = trades.filter(t=>t.pctNet>0).length;
   const totalPctNet = trades.reduce((s,t)=>s+t.pctNet,0);
   const totalPctGross = trades.reduce((s,t)=>s+t.pctGross,0);
   const byRegime = {};
-  trades.forEach(t=>{ if(!byRegime[t.regime]) byRegime[t.regime]={count:0,wins:0}; byRegime[t.regime].count++; if(t.outcome==='tp') byRegime[t.regime].wins++; });
-  return { enough:true, count:n, tradeCount:trades.length, wins, losses:trades.length-wins, totalPctNet, totalPctGross, trades, byRegime };
+  trades.forEach(t=>{ if(!byRegime[t.regime]) byRegime[t.regime]={count:0,wins:0}; byRegime[t.regime].count++; if(t.pctNet>0) byRegime[t.regime].wins++; });
+  return { enough:true, count:n, tradeCount:trades.length, wins, losses:trades.length-wins, totalPctNet, totalPctGross, trades, byRegime, consolOpportunities };
 }
 
 function computeTrendEpisodes(){
@@ -1554,7 +1599,7 @@ function renderCalibrationBody(stats){
   }
   for(const regime in stats.byRegime){
     const r = stats.byRegime[regime];
-    const label = regime==='consolidation' ? 'פריצת דשדוש' : regime==='channel' ? 'פריצת ערוץ מגמה' : regime==='structure' ? 'שבירת מבנה (CHoCH)' : regime;
+    const label = regime==='consolidation' ? 'פריצת דשדוש' : regime==='channel' ? 'פריצת ערוץ מגמה' : regime==='structure' ? 'שבירת מבנה (CHoCH)' : regime==='continuation' ? 'המשך מגמה' : regime;
     html += `<div style="font-size:12px; color:var(--text-dim);">${label}: ${r.wins}/${r.count} הצלחות (${fmt(r.count?r.wins/r.count*100:0,0)}%)</div>`;
   }
   html += `<div style="font-weight:700; color:var(--gold); margin-top:8px;">דיוק לפי מוח</div>`;
@@ -1656,22 +1701,28 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 
   const probLine = (r0 && r0.prob!=null) ? `הסתברות P%: ${fmt(r0.prob,1)}%` : `הסתברות P%: אוספת עדיין נתונים`;
 
-  // Breakout up = new/starting UP trend after consolidation, a trend-channel breakout, OR a
-  // swing-structure break (CHoCH). Three independent professional-style calculations, any can trigger.
+  // Breakout up = new/starting UP trend after consolidation, a trend-channel breakout, a
+  // swing-structure break (CHoCH), OR a trend-continuation pullback resumption. Four independent
+  // professional-style calculations, any can trigger.
   const consolBreakoutUp = checkConsolidationBreakout('up');
   const consolBreakoutDown = checkConsolidationBreakout('down');
   const channelBreakoutUp = checkTrendChannelBreakout('up');
   const channelBreakoutDown = checkTrendChannelBreakout('down');
   const structBreakoutUp = checkSwingStructureBreakout('up');
   const structBreakoutDown = checkSwingStructureBreakout('down');
-  const breakoutUp = consolBreakoutUp || channelBreakoutUp || structBreakoutUp;
-  const breakoutDown = consolBreakoutDown || channelBreakoutDown || structBreakoutDown;
+  const continuationUp = checkTrendContinuationEntry('up');
+  const continuationDown = checkTrendContinuationEntry('down');
+  const breakoutUp = consolBreakoutUp || channelBreakoutUp || structBreakoutUp || continuationUp;
+  const breakoutDown = consolBreakoutDown || channelBreakoutDown || structBreakoutDown || continuationDown;
   // The breakout only becomes a real "entry probability" when the P% engine doesn't actively
-  // contradict it (enough samples AND pointing the opposite way) — matching real data, not just the pattern alone.
+  // contradict it (enough samples AND pointing the opposite way) — matching real data, not just
+  // the pattern alone. EXCEPTION: a raw consolidation breakout (the START of a potential trend)
+  // bypasses this entirely — no additional consideration, open immediately. Channel/structure
+  // breakouts (continuation/reversal WITHIN an existing trend) still require it.
   const probContradictsUp = r0 && r0.enough && r0.dir==='down';
   const probContradictsDown = r0 && r0.enough && r0.dir==='up';
-  const confirmedBreakoutUp = breakoutUp && !probContradictsUp;
-  const confirmedBreakoutDown = breakoutDown && !probContradictsDown;
+  const confirmedBreakoutUp = consolBreakoutUp || (breakoutUp && !probContradictsUp);
+  const confirmedBreakoutDown = consolBreakoutDown || (breakoutDown && !probContradictsDown);
   // The last CONFIRMED closed weekly candle's price — used for stop/trend-exit so a brief live-price
   // wick can't trigger a premature exit right before the move actually goes our way.
   const closedClose = historyCache ? historyCache.closes[historyCache.closes.length-1] : lastClose;
@@ -1699,6 +1750,7 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const lookback = settings.consolidationLookback;
       const isConsolTrigger = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
       const isChannelTrigger = entryDir==='up' ? channelBreakoutUp : channelBreakoutDown;
+      const isStructTrigger = entryDir==='up' ? structBreakoutUp : structBreakoutDown;
       let structuralStop;
       if(isConsolTrigger){
         const startIdx = n - 1 - lookback, endIdx = n - 1;
@@ -1724,12 +1776,27 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
           channelStop = entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult;
         }
         structuralStop = channelStop;
-      } else {
+      } else if(isStructTrigger){
         // Structure-break (CHoCH) triggered entry: the stop belongs at the dividing line itself —
         // if price falls back across it, the structure break has failed/reversed again.
         const s = computeSwingStructure();
-        structuralStop = s ? (entryDir==='up' ? s.dividingLine - lastAtr*0.2 : s.dividingLine + lastAtr*0.2)
+        let structStop = s ? (entryDir==='up' ? s.dividingLine - lastAtr*0.2 : s.dividingLine + lastAtr*0.2)
           : (entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult);
+        // Same cap as the channel mechanism — an excessively wide structure-derived stop falls
+        // back to a standard ATR stop, avoiding the same "unreachable 2:1 target" problem.
+        const structStopDist = Math.abs(lastClose - structStop);
+        if(structStopDist > lastAtr*settings.channelStopCapAtrMult){
+          structStop = entryDir==='up' ? lastClose-lastAtr*settings.atrStopMult : lastClose+lastAtr*settings.atrStopMult;
+        }
+        structuralStop = structStop;
+      } else {
+        // Trend-continuation entry: the classic "stop below the pullback low / above the pullback
+        // high" — if price falls back past the pullback candle's own extreme, the resumption has failed.
+        const n2 = historyCache.closes.length;
+        const pullbackIdx = n2-1;
+        structuralStop = entryDir==='up'
+          ? historyCache.lows[pullbackIdx] - lastAtr*0.2
+          : historyCache.highs[pullbackIdx] + lastAtr*0.2;
       }
       const stopDist = Math.abs(lastClose - structuralStop);
       let targetDist = entryDir==='up'
@@ -1739,25 +1806,26 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const target = entryDir==='up' ? lastClose+targetDist : lastClose-targetDist;
       const risk = structuralStop;
 
-      // Independent Risk/Crash Engine — checked FIRST, separate from the 3 Minds. An absolute
-      // veto: even a perfect 3-Minds agreement score does not override a crash/shock/data-quality block.
+      // Independent Risk/Crash Engine — checked FIRST, separate from the 3 Minds. SKIPPED for a
+      // raw consolidation breakout (start of a trend — no additional consideration by design).
+      // Still an absolute veto for channel/structure entries (continuation/reversal within a trend).
       const riskEngine = runRiskCrashEngine();
       lastRiskEngine = riskEngine;
-      if(!riskEngine.safe){
+      if(!isConsolTrigger && !riskEngine.safe){
         logSignalEvaluation('blocked_risk_engine');
         renderRiskEngineCard();
         document.getElementById('earlyCard').style.display = 'none';
         return;
       }
 
-      // 3 Minds check: even a confirmed breakout can be vetoed by the Challenger or a poor
-      // execution-quality read from the Broker simulator.
+      // 3 Minds check — likewise skipped as a GATE for consolidation entries (still computed and
+      // logged for later analysis/calibration, just not used to block this specific entry).
       const m1 = runMind1Predictor(lastClose, target, risk, entryDir==='up', r0, lastCombinedScore);
       const m2 = runMind2Challenger(entryDir==='up', lastClose, target, risk);
       const m3 = runMind3BrokerSim(lastClose, target, risk, entryDir==='up', settings.posSize||1);
       const cmp = runComparisonEngine(m1, m2, m3);
       lastThreeMinds = {m1, m2, m3, cmp, entryDir, entry:lastClose, target, risk};
-      if(cmp.hardBlock || cmp.agreementScore < cmp.entryThreshold){
+      if(!isConsolTrigger && (cmp.hardBlock || cmp.agreementScore < cmp.entryThreshold)){
         logSignalEvaluation('blocked_minds', cmp.agreementScore);
         renderThreeMindsCard();
         document.getElementById('earlyCard').style.display = 'none';
@@ -1768,7 +1836,8 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       savePosState({open:true, dir:entryDir, entry:lastClose, target, risk});
       const isConsolBreakoutForLog = entryDir==='up' ? consolBreakoutUp : consolBreakoutDown;
       const isChannelBreakoutForLog = entryDir==='up' ? channelBreakoutUp : channelBreakoutDown;
-      const regimeForLog = isConsolBreakoutForLog ? 'consolidation' : isChannelBreakoutForLog ? 'channel' : 'structure';
+      const isStructBreakoutForLog = entryDir==='up' ? structBreakoutUp : structBreakoutDown;
+      const regimeForLog = isConsolBreakoutForLog ? 'consolidation' : isChannelBreakoutForLog ? 'channel' : isStructBreakoutForLog ? 'structure' : 'continuation';
       logTradeEntry(entryDir, lastClose, target, risk, regimeForLog, m1, m2, m3, cmp);
       renderThreeMindsCard();
       const isConsolBreakout = isConsolBreakoutForLog;
@@ -1776,16 +1845,19 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה' : '🔴 SHORT (מכירה) — פריצה';
       const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות שבועיים`
         : isChannelBreakout ? `פריצת ערוץ מגמה (קו מגמה אלכסוני)`
-        : `שבירת מבנה שוק (CHoCH)`;
+        : isStructBreakoutForLog ? `שבירת מבנה שוק (CHoCH)`
+        : `המשך מגמה אחרי תיקון קל`;
+      const probNote = isConsolBreakout ? 'ללא בדיקת P%/סיכון נוספת - כניסה מיידית מתחילת מגמה' : 'P% תואם ולא סותר';
       document.getElementById('earlyMsg').innerHTML = `${dirLabel}<br>` +
+        `<span style="color:var(--gold); font-weight:700;">פתיחת פוזיציה: ${sourceLabel}</span><br>` +
         `<span style="color:var(--up)">כניסה בשער ${fmt(lastClose)}</span><br>` +
         `<span style="color:var(--gold)">יעד סגירה: ${fmt(target)}</span><br>` +
         `<span style="color:var(--down)">סטופ: ${fmt(risk)}</span><br>` +
-        `<span style="color:var(--text-dim); font-size:13px;">${sourceLabel} — P% תואם ולא סותר</span><br>` +
+        `<span style="color:var(--text-dim); font-size:13px;">${probNote}</span><br>` +
         plLine(lastClose, target, risk, entryDir==='up') + `<br>` +
         `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
       earlyCard.style.display = 'block';
-      notify('Gold AI - פתחי פוזיציה', `${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)} — ${sourceLabel}`);
+      notify('Gold AI - פתחי פוזיציה', `פתיחת פוזיציה מ${sourceLabel} — ${entryDir==='up'?'LONG':'SHORT'} בשער ${fmt(lastClose)}`);
     } else {
       earlyCard.style.display = 'none';
       lastThreeMinds = null;
@@ -1806,20 +1878,32 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
 
   // Target: fire on live price (take the win as soon as it's actually reached).
   const hitTarget = pos.dir==='up' ? lastClose>=pos.target : lastClose<=pos.target;
+  // Milestone ladder stop — track the best price reached, persist it, and only move the stop
+  // once a full milestone has actually been passed (never jumping to "current price").
+  const prevMaxFav = pos.maxFavorable!=null ? pos.maxFavorable : pos.entry;
+  const newMaxFav = pos.dir==='up' ? Math.max(prevMaxFav, lastClose) : Math.min(prevMaxFav, lastClose);
+  if(newMaxFav !== pos.maxFavorable){
+    pos.maxFavorable = newMaxFav;
+    savePosState(pos);
+  }
+  const effectiveStop = computeLadderedStop(pos);
   // Stop: only confirmed on a CLOSED candle, to avoid a brief wick triggering an exit right
   // before the price turns back in our favor.
-  const hitStop = pos.dir==='up' ? closedClose<=pos.risk : closedClose>=pos.risk;
+  const hitStop = pos.dir==='up' ? closedClose<=effectiveStop : closedClose>=effectiveStop;
   // Trend ending: a fresh breakout in the OPPOSITE direction (from the existing 3-way breakout system).
   const trendEnding = pos.dir==='up' ? breakoutDown : breakoutUp;
   // 4-tier trend health check — a single adverse signal alone does NOT close the position; only
   // a tier-3 read (confirmed reversal + multiple corroborating signals) does.
   const tierInfo = computeTrendHealthTier(pos.dir, trendEnding);
+  const ladderNote = effectiveStop!==pos.risk
+    ? `<br><span style="color:var(--up); font-size:11px;">🪜 סטופ מדרגה עלה ל-${fmt(effectiveStop)} (במקום ${fmt(pos.risk)} המקורי) - נעל חלק מהרווח</span>`
+    : '';
   const mtfNote = tierInfo && tierInfo.dailyTrend
     ? `<br><span style="color:${tierInfo.mtfDisagrees?'var(--down)':'var(--text-dim)'}; font-size:11px;">מסגרת זמן יומית: ${tierInfo.dailyTrend.dir==='up'?'עולה':'יורדת'} ${tierInfo.mtfDisagrees?'⚠️ לא תואם':'✓ תואם'}</span>`
     : '';
-  document.getElementById('earlyMsg').innerHTML += tierInfo
+  document.getElementById('earlyMsg').innerHTML += ladderNote + (tierInfo
     ? `<br><span style="color:${tierInfo.color}; font-size:13px; font-weight:700;">${tierInfo.label}</span>${mtfNote}`
-    : '';
+    : '');
   const showReview = (review) => {
     if(!review) return;
     const verdict = review.success ? `✅ הצלחה (${review.pct>=0?'+':''}${fmt(review.pct,2)}%)` : `❌ כישלון (${review.pct>=0?'+':''}${fmt(review.pct,2)}%)`;
@@ -1927,8 +2011,8 @@ function computeMarketRegime(){
     if(avgRange>0 && lastRange > avgRange*2.5) crisis = true;
   }
   if(crisis) return {regime:'crisis', label:'🚨 משבר / תנודתיות קיצונית'};
-  const breakUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up');
-  const breakDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down');
+  const breakUp = checkConsolidationBreakout('up') || checkTrendChannelBreakout('up') || checkSwingStructureBreakout('up') || checkTrendContinuationEntry('up');
+  const breakDown = checkConsolidationBreakout('down') || checkTrendChannelBreakout('down') || checkSwingStructureBreakout('down') || checkTrendContinuationEntry('down');
   if(breakUp || breakDown) return {regime:'breakout', label: breakUp?'🟢 פריצה מאושרת (עולה)':'🔴 פריצה מאושרת (יורדת)'};
   if(isConsol) return {regime:'consolidation', label:'⚪ דשדוש'};
   const scoreDir = lastCombinedScore>=0 ? 'up' : 'down';
@@ -1974,6 +2058,33 @@ function computeDailyTrend(){
   return { dir: lastDaily >= sma20 ? 'up' : 'down', lastDaily, sma20 };
 }
 
+// Milestone ladder — asymmetric: early breakeven protection, wider room in the middle, and a
+// tight lock-in near the target (professional practice: tighten aggressively in "outlier"
+// territory close to the target, rather than a fixed one-step-behind gap throughout).
+// [triggerPct, stopMovesToPct] — stopMovesToPct is a fraction of entry-to-target distance (0=entry/breakeven).
+const MILESTONE_LADDER = [
+  {trigger:0.20, moveTo:0.05},
+  {trigger:0.50, moveTo:0.20},
+  {trigger:0.80, moveTo:0.50},
+  {trigger:0.90, moveTo:0.90}, // near target — lock in at the same level, not one step behind
+];
+function computeLadderedStop(pos){
+  if(!pos || pos.target==null || pos.entry==null) return pos ? pos.risk : null;
+  const totalDist = Math.abs(pos.target - pos.entry);
+  if(totalDist<=0) return pos.risk;
+  const maxFav = pos.maxFavorable!=null ? pos.maxFavorable : pos.entry;
+  const reachedDist = pos.dir==='up' ? (maxFav-pos.entry) : (pos.entry-maxFav);
+  const reachedPct = reachedDist/totalDist;
+  let moveToFrac = null;
+  for(const step of MILESTONE_LADDER){
+    if(reachedPct >= step.trigger - 1e-9) moveToFrac = step.moveTo;
+  }
+  if(moveToFrac==null) return pos.risk; // haven't reached the first trigger (20%) yet
+  const ladderedPrice = pos.dir==='up' ? pos.entry + moveToFrac*totalDist : pos.entry - moveToFrac*totalDist;
+  // The ladder only ever moves the stop IN the trade's favor, never against it.
+  return pos.dir==='up' ? Math.max(pos.risk, ladderedPrice) : Math.min(pos.risk, ladderedPrice);
+}
+
 function computeTrendHealthTier(posDir, reversalConfirmed){
   if(!historyCache || !lastAtr) return null;
   const n = historyCache.closes.length;
@@ -2015,6 +2126,37 @@ function computeTrendHealthTier(posDir, reversalConfirmed){
     tier=3; label='🔴 שינוי מגמה מאומת + מצב שוק מסוכן - יציאה'; color='var(--down)'; action='exit';
   }
   return { tier, label, color, action, reversalConfirmed, momentumSupports, volatilityExpanding, velocityHigh, mtfDisagrees, dailyTrend: daily, confirmations };
+}
+
+// Mechanism #4 — Trend Continuation: within an ESTABLISHED trend (not consolidating), a pullback
+// candle (against the trend) immediately followed by a resumption candle (back with the trend,
+// clearing the pullback candle's open) — the classic "buy the dip, stop below the dip" pattern.
+// Deliberately noisier than the other 3 mechanisms, so it stays fully gated (P%, Risk Engine,
+// 3 Minds) — no bypass, unlike consolidation breakouts.
+function checkTrendContinuationEntry(direction){
+  if(!historyCache || !lastAtr) return false;
+  const n = historyCache.closes.length;
+  if(n < 1) return false;
+  const closes=historyCache.closes, opens=historyCache.opens;
+  const ch = computeTrendChannel(); // null when consolidating — trend continuation only applies when trending
+  if(!ch) return false;
+  const trendDir = ch.dirUp ? 'up' : 'down';
+  if(trendDir !== direction) return false;
+  // Pullback = the last CLOSED candle (fully confirmed against the trend).
+  const pullbackIdx = n-1;
+  const pullbackDir = closes[pullbackIdx]>=opens[pullbackIdx] ? 'up' : 'down';
+  const oppositeOfTrend = direction==='up' ? 'down' : 'up';
+  if(pullbackDir !== oppositeOfTrend) return false; // must have genuinely pulled back against the trend
+  // Resumption = checked on LIVE price, immediately — the moment price crosses back past the
+  // pullback candle's own open, that itself IS the continuation signal, no need to wait for a
+  // full candle close (the pullback already closed as confirmation; only the resumption is live).
+  if(lastKnownClose==null) return false;
+  const buffer = lastAtr*settings.breakoutBufferAtrMult;
+  if(direction==='up' && lastKnownClose < opens[pullbackIdx]+buffer) return false;
+  if(direction==='down' && lastKnownClose > opens[pullbackIdx]-buffer) return false;
+  // Don't double-fire alongside a stronger signal (channel/structure breakout) — those take priority
+  if(checkTrendChannelBreakout(direction) || checkSwingStructureBreakout(direction)) return false;
+  return true;
 }
 
 function checkSwingStructureBreakout(direction){
@@ -2101,10 +2243,13 @@ function checkConsolidationBreakout(direction){
   if(!isConsolidating) return false;
 
   const buffer = lastAtr * settings.breakoutBufferAtrMult;
-  // Confirmation price: either the live price (faster, more prone to noise/false breakouts) or
-  // the last CLOSED candle's close (matches common professional practice — a close beyond the
-  // border, not just a wick/live-tick touch — slower to confirm but fewer false signals).
-  const confirmPrice = settings.requireCloseBreakout ? historyCache.closes[n-1] : lastKnownClose;
+  // A breakout FROM CONSOLIDATION marks the START of a potential move — waiting for a full
+  // candle close here means giving up much of the early move on an already-slow weekly
+  // timeframe. Always use the LIVE price for this specific check. Close-confirmation is still
+  // used for channel/structure breakouts and trend-reversal detection, which represent
+  // continuation/reversal WITHIN an established trend, where the extra confirmation is worth
+  // the delay.
+  const confirmPrice = lastKnownClose;
 
   // Optional volume confirmation (professional best practice: breakout volume >= ~1.5x the
   // 20-period average). Off by default — gold CFD/forex volume is typically unreliable tick
@@ -2160,7 +2305,7 @@ function renderChangeStats(data, lastClose, st, currentScore){
   let barEntry = null, barTarget = null, barRisk = null, barDirUp = scoreDir==='up';
 
   if(hasActivePos){
-    barEntry = pos.entry; barTarget = pos.target; barRisk = pos.risk; barDirUp = pos.dir==='up';
+    barEntry = pos.entry; barTarget = pos.target; barRisk = computeLadderedStop(pos); barDirUp = pos.dir==='up';
     const pct = Math.abs(pos.target-pos.entry)/pos.entry*100;
     elE.textContent = (barDirUp?'+':'-') + fmt(pct,2) + '% (' + (barDirUp?'LONG':'SHORT') + ', פוזיציה פעילה)';
     elE.style.color = barDirUp ? 'var(--up)' : 'var(--down)';
@@ -2195,38 +2340,74 @@ function renderChangeStats(data, lastClose, st, currentScore){
   if(barTarget!=null && barEntry!=null && barRisk!=null){
     const targetIsHigher = barTarget > barEntry;
     // price -> % position, with entry FIXED at 50%, target-side and stop-side each get their own half
+    // Entry position on the bar — shifted so the green (target) side gets more visual room than
+    // the red (stop) side, since the stop is usually structurally much closer than the target.
+    const ENTRY_PCT = 30;
     const priceToPct = (v) => {
       if(targetIsHigher){
-        if(v >= barEntry) return 50 + 50*Math.max(0,Math.min(1,(v-barEntry)/(barTarget-barEntry)));
-        return 50 - 50*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barRisk)));
+        if(v >= barEntry) return ENTRY_PCT + (100-ENTRY_PCT)*Math.max(0,Math.min(1,(v-barEntry)/(barTarget-barEntry)));
+        return ENTRY_PCT - ENTRY_PCT*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barRisk)));
       } else {
-        if(v <= barEntry) return 50 - 50*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barTarget)));
-        return 50 + 50*Math.max(0,Math.min(1,(v-barEntry)/(barRisk-barEntry)));
+        if(v <= barEntry) return ENTRY_PCT - ENTRY_PCT*Math.max(0,Math.min(1,(barEntry-v)/(barEntry-barTarget)));
+        return ENTRY_PCT + (100-ENTRY_PCT)*Math.max(0,Math.min(1,(v-barEntry)/(barRisk-barEntry)));
       }
     };
     if(targetIsHigher){
-      tgGreenZone.style.left = '50%'; tgGreenZone.style.width = '50%';
-      tgRedZone.style.left = '0%'; tgRedZone.style.width = '50%';
+      tgGreenZone.style.left = ENTRY_PCT+'%'; tgGreenZone.style.width = (100-ENTRY_PCT)+'%';
+      tgRedZone.style.left = '0%'; tgRedZone.style.width = ENTRY_PCT+'%';
       tgLeftEdgeLabel.textContent = 'סטופ'; tgLeftEdgeLabel.style.color = 'var(--down)';
       tgRightEdgeLabel.textContent = 'יעד'; tgRightEdgeLabel.style.color = 'var(--up)';
     } else {
-      tgGreenZone.style.left = '0%'; tgGreenZone.style.width = '50%';
-      tgRedZone.style.left = '50%'; tgRedZone.style.width = '50%';
+      tgGreenZone.style.left = '0%'; tgGreenZone.style.width = (100-ENTRY_PCT)+'%';
+      tgRedZone.style.left = (100-ENTRY_PCT)+'%'; tgRedZone.style.width = ENTRY_PCT+'%';
       tgLeftEdgeLabel.textContent = 'יעד'; tgLeftEdgeLabel.style.color = 'var(--up)';
       tgRightEdgeLabel.textContent = 'סטופ'; tgRightEdgeLabel.style.color = 'var(--down)';
     }
-    tgEntryMark.style.left = '50%';
+    tgEntryMark.style.left = ENTRY_PCT+'%';
     tgNowMark.style.left = priceToPct(lastClose) + '%';
-    const entryTitle = hasActivePos ? 'כניסה בפועל' : 'אזור כניסה צפוי';
+
+    // Milestone markers — the ACTUAL asymmetric ladder trigger points (20/50/80/90%)
+    const milestoneEl = document.getElementById('tgMilestones');
+    const milestoneLabelsEl = document.getElementById('tgMilestoneLabels');
+    let msHtml = '';
+    let msLabelsHtml = `<span style="position:absolute; left:${ENTRY_PCT}%; transform:translateX(-50%);">0%</span>`;
+    MILESTONE_LADDER.forEach(step=>{
+      const frac = step.trigger;
+      const msPrice = barDirUp ? barEntry + frac*(barTarget-barEntry) : barEntry - frac*(barEntry-barTarget);
+      const pctPos = priceToPct(msPrice);
+      msHtml += `<div style="position:absolute; top:0; bottom:0; left:${pctPos}%; width:1px; background:rgba(255,255,255,.35);"></div>`;
+      msLabelsHtml += `<span style="position:absolute; left:${pctPos}%; transform:translateX(-50%);">${Math.round(frac*100)}%</span>`;
+    });
+    milestoneEl.innerHTML = msHtml;
+    milestoneLabelsEl.innerHTML = msLabelsHtml;
+
+    // Thick peak line — fixed at the best price reached so far (not the live price)
+    const tgPeakMark = document.getElementById('tgPeakMark');
+    if(hasActivePos && pos.maxFavorable!=null){
+      tgPeakMark.style.display = 'block';
+      tgPeakMark.style.left = priceToPct(pos.maxFavorable) + '%';
+    } else {
+      tgPeakMark.style.display = 'none';
+    }
+
+    const stopTitle = hasActivePos ? 'סטופ (עדכני - זה מה שצריך להיות בפלוס500)' : 'סטופ';
+    const milestonePcts = [0.05, 0.20, 0.50, 0.80, 0.90];
+    const milestoneStats = milestonePcts.map(frac=>{
+      const msPrice = barDirUp ? barEntry + frac*(barTarget-barEntry) : barEntry - frac*(barEntry-barTarget);
+      return `<div class="stat" style="padding:8px;"><div class="lbl">שער ${Math.round(frac*100)}%</div><div class="val" style="font-size:13px;">${fmt(msPrice)}</div></div>`;
+    }).join('');
     tgLabels.innerHTML =
       `<div class="grid2" style="direction:rtl; gap:6px;">` +
-        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--gold);">${entryTitle}</div><div class="val" style="font-size:13px;">${fmt(barEntry)}</div></div>` +
-        `<div class="stat" style="padding:8px;"><div class="lbl">מחיר נוכחי</div><div class="val" style="font-size:13px;">${fmt(lastClose)}</div></div>` +
         `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--up);">יעד</div><div class="val" style="font-size:13px;">${fmt(barTarget)}</div></div>` +
-        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--down);">סטופ</div><div class="val" style="font-size:13px;">${fmt(barRisk)}</div></div>` +
-      `</div>`;
+        `<div class="stat" style="padding:8px;"><div class="lbl" style="color:var(--down);">${stopTitle}</div><div class="val" style="font-size:13px;">${fmt(barRisk)}</div></div>` +
+        milestoneStats +
+      `</div>` +
+      (hasActivePos && pos.maxFavorable!=null ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; text-align:center;">קו עבה = שיא שהושג (${fmt(pos.maxFavorable)}) | קו דק = מחיר נוכחי</div>` : '');
   } else {
     tgEntryMark.style.left = '-10%'; tgNowMark.style.left = '-10%';
+    document.getElementById('tgPeakMark').style.display = 'none';
+    document.getElementById('tgMilestones').innerHTML = '';
+    document.getElementById('tgMilestoneLabels').innerHTML = '';
     tgGreenZone.style.width = '0%'; tgRedZone.style.width = '0%';
     tgLabels.innerHTML = `<span style="color:var(--text-dim);">אין עדיין מספיק נתונים לחישוב יעד</span>`;
   }
@@ -2504,15 +2685,25 @@ function drawMiniChart(data, livePrice, count=30){
 function renderSimpleMessage(r0, lastClose){
   let simpleHtml = `מחיר נוכחי: <span style="color:var(--gold)">$${fmt(lastClose)}</span><br>`;
   const scoreDir = lastCombinedScore >= 0 ? 'up' : 'down';
-  const breakoutUp = checkConsolidationBreakout('up');
-  const breakoutDown = checkConsolidationBreakout('down');
+  const consolUp = checkConsolidationBreakout('up');
+  const consolDown = checkConsolidationBreakout('down');
+  const channelUp = checkTrendChannelBreakout('up');
+  const channelDown = checkTrendChannelBreakout('down');
+  const structUp = checkSwingStructureBreakout('up');
+  const structDown = checkSwingStructureBreakout('down');
+  const contUp = checkTrendContinuationEntry('up');
+  const contDown = checkTrendContinuationEntry('down');
+  const breakoutUp = consolUp || channelUp || structUp || contUp;
+  const breakoutDown = consolDown || channelDown || structDown || contDown;
   const probContradictsUp = r0 && r0.enough && r0.dir==='down';
   const probContradictsDown = r0 && r0.enough && r0.dir==='up';
-  const confirmedNow = (breakoutUp && !probContradictsUp) || (breakoutDown && !probContradictsDown);
+  // Consolidation bypasses P% entirely (matches the live entry gate); the other 3 mechanisms still require it.
+  const confirmedNow = (consolUp || consolDown) || (breakoutUp && !probContradictsUp) || (breakoutDown && !probContradictsDown);
 
   if(confirmedNow){
     const dir = breakoutUp ? 'up' : 'down';
-    simpleHtml += `${dir==='up'?'🟢 LONG':'🔴 SHORT'} — פריצת דשדוש אושרה, ראי כרטיס פוזיציה למטה לפרטים מלאים`;
+    const mech = consolUp||consolDown ? 'פריצת דשדוש' : (channelUp||channelDown) ? 'פריצת ערוץ מגמה' : (structUp||structDown) ? 'שבירת מבנה' : 'המשך מגמה אחרי תיקון';
+    simpleHtml += `${dir==='up'?'🟢 LONG':'🔴 SHORT'} — ${mech} אושרה, ראי כרטיס פוזיציה למטה לפרטים מלאים`;
   } else {
     // Not an active entry — show honest waiting status instead of a misleading "open now" message.
     const pos = loadPosState();
@@ -2538,7 +2729,13 @@ function renderSimpleMessage(r0, lastClose){
         simpleHtml += `⚪ בדשדוש כרגע - ממתינה לפריצה (${scoreDir==='up'?'LONG':'SHORT'} פוטנציאלי)`;
         if(t) simpleHtml += `<br><span style="color:var(--text-dim); font-size:13px;">צפי זמן לכניסה: ~${fmt(t.estHours/24,1)} ימים (${(t.estHours/168).toFixed(1)} שבועות)</span>`;
       } else {
-        simpleHtml += `⚪ אין דשדוש מזוהה כרגע - אין תחזית כניסה זמינה`;
+        // Not consolidating — check if we're in a trend where the OTHER 3 mechanisms could still fire
+        const regime = computeMarketRegime();
+        if(regime.regime==='trend' || regime.regime==='pullback'){
+          simpleHtml += `⚪ אין דשדוש כרגע - ${regime.label}, ממתינה לפריצת ערוץ/שבירת מבנה/המשך מגמה`;
+        } else {
+          simpleHtml += `⚪ אין דשדוש מזוהה כרגע - אין תחזית כניסה זמינה`;
+        }
       }
     } else if(!r0.enough){
       simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר שבועי`;
@@ -2720,7 +2917,7 @@ function readSettingsForm(){
   settings.maintPct = parseFloat(document.getElementById('maintPct').value)||0.33;
   settings.riskPercentPerTrade = parseFloat(document.getElementById('riskPercentPerTrade').value)||1;
   settings.scoreThreshold = parseFloat(document.getElementById('scoreThreshold').value)||4;
-  settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||6;
+  settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||4;
   settings.consolidationMaxRangeAtrMult = parseFloat(document.getElementById('consolidationMaxRangeAtrMult').value)||2.0;
   settings.breakoutBufferAtrMult = parseFloat(document.getElementById('breakoutBufferAtrMult').value)||0.2;
   settings.requireCloseBreakout = document.getElementById('requireCloseBreakout').checked;
@@ -2980,22 +3177,46 @@ document.getElementById('runBacktestBtn').addEventListener('click', ()=>{
     bt.trades.forEach((t, idx) => {
       const regimeLabel = t.regime==='consolidation'?'פריצת דשדוש':t.regime==='channel'?'פריצת ערוץ מגמה':'שבירת מבנה';
       const outcomeLabel = t.outcome==='tp'?'✅ יעד':(t.outcome==='sl'?'🛑 סטופ':'🔄 היפוך מגמה');
+      const netBadge = t.pctNet>0 ? '💰 רווחי' : '📉 הפסדי';
       const color = t.pctNet>=0 ? 'var(--up)' : 'var(--down)';
       const spreadOfGross = t.pctGross ? (t.spreadPct/Math.abs(t.pctGross)*100) : 0;
       const financingOfGross = t.pctGross ? (Math.abs(t.financingPct)/Math.abs(t.pctGross)*100) : 0;
       const channelNote = t.channelType ? ` (${t.channelType})` : '';
-      const progressNote = t.outcome!=='tp' ? `<br><span style="color:var(--text-dim); font-size:11px;">הגיע ל-${fmt(t.pctOfTargetReached,0)}% מהדרך ליעד לפני שנכשל (כניסה: ${fmt(t.entry)} | יעד: ${fmt(t.target)} | סטופ: ${fmt(t.risk)})</span>` : '';
+      let ladderNote = '';
+      if(t.outcome!=='tp'){
+        const reachedFrac = t.pctOfTargetReached/100;
+        let moveToFrac = null, triggerPct = null;
+        for(const step of MILESTONE_LADDER){
+          if(reachedFrac >= step.trigger - 1e-9){ moveToFrac = step.moveTo; triggerPct = step.trigger; }
+        }
+        if(moveToFrac!=null){
+          const totalDist = Math.abs(t.target-t.entry);
+          const ladderedPrice = t.dir==='up' ? t.entry + moveToFrac*totalDist : t.entry - moveToFrac*totalDist;
+          ladderNote = `<br><span style="color:var(--up); font-size:11px;">🪜 חצתה ${fmt(triggerPct*100,0)}% → הסטופ עלה מ-${fmt(t.risk)} ל-${fmt(ladderedPrice)} (רמת ${fmt(moveToFrac*100,0)}%)</span>`;
+        } else {
+          ladderNote = `<br><span style="color:var(--text-dim); font-size:11px;">לא חצתה 20% - הסטופ נשאר במקומו המקורי (${fmt(t.risk)})</span>`;
+        }
+      }
+      const progressNote = t.outcome!=='tp' ? `<br><span style="color:var(--text-dim); font-size:11px;">הגיע ל-${fmt(t.pctOfTargetReached,0)}% מהדרך ליעד לפני שנכשל (כניסה: ${fmt(t.entry)} | יעד: ${fmt(t.target)} | סטופ מקורי: ${fmt(t.risk)})</span>${ladderNote}` : '';
+      const durationWeeks = t.exitIdx - t.entryIdx;
       tradesHtml += `<div style="border-top:1px solid var(--border); padding-top:6px; margin-top:6px; font-size:12px;">` +
-        `<b>מגמה ${idx+1}:</b> ${t.dir==='up'?'🟢 LONG':'🔴 SHORT'} | ${regimeLabel}${channelNote} | שבוע #${t.entryIdx} ← שבוע #${t.exitIdx} | ${outcomeLabel}<br>` +
+        `<b>מגמה ${idx+1} - ${durationWeeks} נרות:</b> ${t.dir==='up'?'🟢 LONG':'🔴 SHORT'} | ${regimeLabel}${channelNote} | שבוע #${t.entryIdx} ← שבוע #${t.exitIdx} | ${outcomeLabel} | ${netBadge}<br>` +
         `רווח/הפסד נטו: <b style="color:${color};">${t.pctNet>=0?'+':''}${fmt(t.pctNet,2)}%</b> <span style="color:var(--text-dim);">(גולמי: ${t.pctGross>=0?'+':''}${fmt(t.pctGross,2)}%)</span><br>` +
         `<span style="color:var(--text-dim); font-size:11px;">מרווח דינמי: -${fmt(spreadOfGross,1)}% מהגולמי | מימון לילה: ${t.financingPct>=0?'+':'-'}${fmt(financingOfGross,1)}% מהגולמי</span>` +
         progressNote +
         `</div>`;
     });
     const ilsEquivalent = (lastKnownClose!=null && lastUsdIls) ? (bt.totalPctNet/100) * (lastKnownClose*(settings.posSize||1)) * lastUsdIls : null;
+    const occupiedCount = bt.consolOpportunities.filter(o=>o.occupied).length;
+    const freeCount = bt.consolOpportunities.length - occupiedCount;
+    const consolNote = bt.consolOpportunities.length
+      ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; border-top:1px solid var(--border); padding-top:6px;">איתותי דשדוש גולמיים שנמצאו: ${bt.consolOpportunities.length} | תפוסים ע"י עסקה קיימת: ${occupiedCount} | פנויים ולא נפתחו: ${freeCount}<br>שבועות פנויים: ${bt.consolOpportunities.filter(o=>!o.occupied).map(o=>'#'+o.week).join(', ')||'-'}</div>`
+      : '';
     content.innerHTML = `
       <div style="font-size:13px;">נבדקו ${bt.count} נרות שבועיים | ${bt.tradeCount} עסקאות (המערכת המלאה, כולל 3 מוחות ומנוע סיכון) נמצאו</div>
-      <div style="font-size:13px; margin-top:4px;">הצלחות: ${bt.wins} | כישלונות: ${bt.losses} | אחוז הצלחה: ${fmt(winRate,0)}%</div>
+      <div style="font-size:13px; margin-top:4px;">רווחיות (נטו): ${bt.wins} | הפסדיות (נטו): ${bt.losses} | אחוז רווחיות בפועל: ${fmt(winRate,0)}%</div>
+      <div style="font-size:10px; color:var(--text-dim);">"רווחיות" = נטו חיובי בפועל, לא רק "הגיע ליעד" - בזכות סטופ המדרגות, גם עסקת "סטופ" יכולה להיות רווחית</div>
+      ${consolNote}
       <div style="margin-top:6px;">${regimeHtml}</div>
       <div style="font-size:15px; font-weight:700; margin-top:8px; color:${verdictColor};">תוצאה מצטברת (נטו, אחרי מרווח דינמי + מימון לילה): ${bt.totalPctNet>=0?'+':''}${fmt(bt.totalPctNet,2)}%${ilsEquivalent!=null?` (≈ ${ilsEquivalent>=0?'+':''}₪${fmt(ilsEquivalent,0)})`:''}</div>
       <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">(גולמי, לפני עלויות: ${bt.totalPctGross>=0?'+':''}${fmt(bt.totalPctGross,2)}%)</div>
