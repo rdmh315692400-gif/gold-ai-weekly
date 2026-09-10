@@ -10,7 +10,7 @@
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%20%22Gold%20AI%20-%20%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA%20%D7%94%D7%A1%D7%AA%D7%91%D7%A8%D7%95%D7%AA%20%D7%9E%D7%A1%D7%97%D7%A8%22%2C%20%22short_name%22%3A%20%22Gold%20AI%22%2C%20%22start_url%22%3A%20%22./%22%2C%20%22scope%22%3A%20%22./%22%2C%20%22display%22%3A%20%22standalone%22%2C%20%22background_color%22%3A%20%22%2312141A%22%2C%20%22theme_color%22%3A%20%22%2312141A%22%2C%20%22icons%22%3A%20%5B%7B%22src%22%3A%20%22data%3Aimage/svg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8%2BCiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg%3D%3D%22%2C%20%22sizes%22%3A%20%22any%22%2C%20%22type%22%3A%20%22image/svg%2Bxml%22%2C%20%22purpose%22%3A%20%22any%20maskable%22%7D%5D%7D">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8+CiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg==">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9IiMxMjE0MUEiLz4KICAgIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSIjQzlBMjI3Ii8+CiAgICA8dGV4dCB4PSI1MCIgeT0iNTkiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxMjE0MUEiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkF1PC90ZXh0PgogIDwvc3ZnPg==">
-<title>Gold AI Daily — מערכת הסתברות מסחר</title>
+<title>Gold AI Monthly — מערכת הסתברות מסחר</title>
 <style>
   :root{
     --bg:#12141A; --panel:#1B1E27; --panel-2:#20242F; --border:#2B2F3B;
@@ -100,7 +100,7 @@
 
   <header>
     <div class="row">
-      <h1>Gold AI Daily</h1>
+      <h1>Gold AI Monthly</h1>
       <div class="price" id="livePrice">—</div>
     </div>
     <div class="sub" id="statusLine">טוען...</div>
@@ -116,9 +116,14 @@
         <div id="actionRange" style="margin-top:10px; font-size:14px; line-height:1.9;"></div>
       </div>
 
+      <div class="card" id="monthlyForecastCard">
+        <h2>📅 תחזית חודשית ומאזן רווח/הפסד</h2>
+        <div id="monthlyForecastContent" style="font-size:13.5px; line-height:1.8;"></div>
+      </div>
+
       <div class="card" style="padding:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 style="margin:0;">נר יומי — זהב</h2>
+          <h2 style="margin:0;">נר חודשי — זהב</h2>
           <button id="chartZoomBtn" class="btn secondary" style="width:auto; padding:6px 14px; font-size:12px;">🔍 הגדל</button>
         </div>
         <canvas id="miniChart" width="320" height="150" style="width:100%; height:150px; display:block;"></canvas>
@@ -160,7 +165,7 @@
       </div>
 
       <div class="card" id="spreadCard">
-        <h2>מרווח דינמי - עדכון יומי</h2>
+        <h2>מרווח דינמי - עדכון חודשי</h2>
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="number" id="dailySpreadInput" step="0.01" style="flex:1;">
           <button class="btn" id="saveDailySpreadBtn" style="width:auto; padding:11px 18px;">שמור</button>
@@ -188,10 +193,10 @@
       <div class="card">
         <h2>שינויי אחוזים</h2>
         <div class="grid2">
-          <div class="stat"><div class="lbl">שינוי מהיום הקודם</div><div class="val" id="chgDaily">-</div></div>
-          <div class="stat"><div class="lbl">שינוי ביום הנוכחי</div><div class="val" id="chgCandle">-</div></div>
+          <div class="stat"><div class="lbl">שינוי מהחודש הקודם</div><div class="val" id="chgDaily">-</div></div>
+          <div class="stat"><div class="lbl">שינוי בחודש הנוכחי</div><div class="val" id="chgCandle">-</div></div>
         </div>
-        <div class="stat" style="margin-top:10px;"><div class="lbl">צפי שינוי מכניסה עד סגירה יומית (P%)</div><div class="val" id="chgExpected">-</div><div class="lbl" id="chgExpectedPrices" style="margin-top:4px;"></div></div>
+        <div class="stat" style="margin-top:10px;"><div class="lbl">צפי שינוי מכניסה עד סגירה חודשית (P%)</div><div class="val" id="chgExpected">-</div><div class="lbl" id="chgExpectedPrices" style="margin-top:4px;"></div></div>
 
         <div style="margin-top:14px;">
           <div class="lbl" style="margin-bottom:4px;">1. סרגל מחיר — כניסה במרכז</div>
@@ -239,7 +244,7 @@
       </div>
 
       <div class="card">
-        <h2>רווח/הפסד צפוי בנר יומי (P%) - לפי גודל פוזיציה</h2>
+        <h2>רווח/הפסד צפוי בנר חודשי (P%) - לפי גודל פוזיציה</h2>
         <div id="capSizeTable"></div>
       </div>
 
@@ -249,7 +254,7 @@
       </div>
 
       <div class="card" id="pivotCard">
-        <h2>🔄 רמות היפוך תוך-יומיות (Camarilla)</h2>
+        <h2>🔄 רמות היפוך תוך-חודשיות (Camarilla)</h2>
         <div id="pivotContent"></div>
       </div>
 
@@ -335,9 +340,9 @@
         <input type="number" id="minProb" value="55">
       </div>
 
-      <div class="section-title">טווח זמן (בנרות) — הסתברות מותאמת אך ורק לנר יומי</div>
+      <div class="section-title">טווח זמן (בנרות) — הסתברות מותאמת אך ורק לנר חודשי</div>
       <div class="card">
-        <label>טווח (היום הבא — לא ניתן לשינוי, זו כל התחזית)</label>
+        <label>טווח (החודש הבא — לא ניתן לשינוי, זו כל התחזית)</label>
         <input type="number" id="barsH1" value="1" disabled>
       </div>
 
@@ -358,7 +363,7 @@
         <label>סף ציון משולב לאישור כניסה (±)</label>
         <input type="number" id="scoreThreshold" value="5" step="0.5">
         <label>נרות אחורה לזיהוי דשדוש (Consolidation)</label>
-        <input type="number" id="consolidationLookback" value="10" step="1">
+        <input type="number" id="consolidationLookback" value="6" step="1">
         <label>טווח מקסימלי שנחשב דשדוש (מכפיל ATR)</label>
         <input type="number" id="consolidationMaxRangeAtrMult" value="2.0" step="0.1">
         <label>מרווח אישור פריצה (מכפיל ATR)</label>
@@ -385,8 +390,8 @@
         <input type="number" id="atrStopMult" value="1.0" step="0.1">
         <label>יחס סיכון:סיכוי מינימלי (היעד יהיה לפחות פי כך מהסטופ)</label>
         <input type="number" id="minRewardRiskMult" value="2.5" step="0.1">
-        <label>מרחק מקסימלי סביר לאזור כניסה (מכפיל ATR יומי)</label>
-        <input type="number" id="maxZoneAtrMult" value="4" step="0.5">
+        <label>מרחק מקסימלי סביר לאזור כניסה (מכפיל ATR חודשי)</label>
+        <input type="number" id="maxZoneAtrMult" value="10" step="0.5">
         <label>תקרת מרחק סטופ מבוסס-ערוץ (מכפיל ATR, מעבר לזה נופל לסטופ ATR רגיל)</label>
         <input type="number" id="channelStopCapAtrMult" value="3.0" step="0.5">
         <label>סף RSI לחסימת כניסת "האצה" בערוץ (מעל זה ל-LONG / מתחת ל-100 פחות זה ל-SHORT)</label>
@@ -431,10 +436,10 @@ const DEFAULTS = {
   scoreBand:2.5, maxSamples:35, minSamples:20, minEdge:0.15, minProb:55,
   barsH1:1,
   posSize:1, leverage:150, spreadCost:0.88, commissionPerTrade:0, maintPct:0.33, scoreThreshold:5, riskPercentPerTrade:1,
-  srProximityPts:3, atrStopMult:1.0, maxZoneAtrMult:4, overnightBuyPct:-0.0319, overnightSellPct:-0.0120, accountBalanceIls:1000,
+  srProximityPts:3, atrStopMult:1.0, maxZoneAtrMult:10, overnightBuyPct:-0.0319, overnightSellPct:-0.0120, accountBalanceIls:1000,
   manualPriceOverride:null, manualPriceOverrideIls:null, manualMarginOverride:null, manualMarginOverrideIls:null,
   marginRatio:null, exchangeRateOverride:null,
-  consolidationLookback:10, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
+  consolidationLookback:6, consolidationMaxRangeAtrMult:2.0, breakoutBufferAtrMult:0.2, requireCloseBreakout:true,
   requireVolumeConfirmation:false, volumeConfirmMult:1.5,
   calibMinTrades:15, channelStopCapAtrMult:3.0, accelerationRsiCap:70, minRewardRiskMult:2.5
 };
@@ -493,6 +498,7 @@ async function liveTick(){
       renderRiskEngineCard();
       renderPivotCard();
       renderActionCard();
+      renderMonthlyForecastCard();
       renderSelfControlCard();
     }
   }catch(e){ console.warn('live tick failed', e); }
@@ -697,30 +703,41 @@ function buildHorizon(scores, closes, bars){
 // ============================================================
 async function fetchHistory(){
   if(!settings.apiKey){ throw new Error('NO_KEY'); }
-  // Daily candles: each candle here IS one native trading day from Twelve Data (timezone=Asia/
+  // Monthly candles: Twelve Data returns native calendar-month bars directly (timezone=Asia/
   // Jerusalem, which the API converts for us — including DST shifts automatically, since we're
-  // reading the LOCAL Israel calendar day, not a manually-computed UTC offset). No grouping is
-  // needed — the daily bar from the API already lines up with a real trading day.
-  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1day&outputsize=2500&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
+  // reading the LOCAL Israel calendar month, not a manually-computed UTC offset). No grouping
+  // needed — the API's monthly bar already lines up with a real calendar month.
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1month&outputsize=300&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
   const res = await fetch(url);
   const json = await res.json();
   if(json.status==='error' || !json.values) throw new Error(json.message || 'FETCH_ERROR');
-  const daily = json.values.slice().reverse(); // oldest -> newest, each {datetime, open, high, low, close, volume}
+  const monthly = json.values.slice().reverse(); // oldest -> newest, each {datetime, open, high, low, close, volume}
 
-  // Drop the last bar if it's still today (still forming) — the app tracks the live price
-  // separately, so history should only contain CLOSED daily candles. Compared as a LOCAL calendar
-  // date string in the configured timezone, so it lines up with how the API dated the bar.
-  const localDateStr = (d, tz) => new Intl.DateTimeFormat('en-CA', {timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit'}).format(d);
-  const todayStr = localDateStr(new Date(), settings.timezone);
-  const closedDaily = (daily.length && daily[daily.length-1].datetime.slice(0,10)===todayStr)
-    ? daily.slice(0,-1) : daily;
+  // Drop the last bar if it's still THIS calendar month (still forming) — the app tracks the live
+  // price separately, so history should only contain CLOSED monthly candles.
+  const localYearMonth = (d, tz) => new Intl.DateTimeFormat('en-CA', {timeZone: tz, year:'numeric', month:'2-digit'}).format(d);
+  const thisYearMonth = localYearMonth(new Date(), settings.timezone);
+  const closedMonthly = (monthly.length && monthly[monthly.length-1].datetime.slice(0,7)===thisYearMonth)
+    ? monthly.slice(0,-1) : monthly;
+
+  // Multi-Timeframe confirmation (daily bars vs their own 20-day SMA) — a genuine lower timeframe
+  // now that the main candles are monthly, so this is fetched again (was disabled in the daily
+  // version, where main candles WERE the daily bars and this would have been circular).
+  let dailyCloses = null;
+  try{
+    const dailyUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(settings.symbol)}&interval=1day&outputsize=60&timezone=${encodeURIComponent(settings.timezone)}&apikey=${encodeURIComponent(settings.apiKey)}`;
+    const dailyRes = await fetch(dailyUrl);
+    const dailyJson = await dailyRes.json();
+    if(dailyJson.status!=='error' && dailyJson.values) dailyCloses = dailyJson.values.slice().reverse().map(v=>parseFloat(v.close));
+  }catch(e){ /* MTF is a soft confirmation layer — a failed fetch here shouldn't break the main signal */ }
 
   return {
-    closes: closedDaily.map(v=>parseFloat(v.close)),
-    highs: closedDaily.map(v=>parseFloat(v.high)),
-    lows: closedDaily.map(v=>parseFloat(v.low)),
-    opens: closedDaily.map(v=>parseFloat(v.open)),
-    volumes: closedDaily.map(v=>v.volume?parseFloat(v.volume):0),
+    closes: closedMonthly.map(v=>parseFloat(v.close)),
+    highs: closedMonthly.map(v=>parseFloat(v.high)),
+    lows: closedMonthly.map(v=>parseFloat(v.low)),
+    opens: closedMonthly.map(v=>parseFloat(v.open)),
+    volumes: closedMonthly.map(v=>v.volume?parseFloat(v.volume):0),
+    dailyCloses,
   };
 }
 async function fetchQuote(){
@@ -890,6 +907,173 @@ function logTradeEntry(entryDir, entry, target, risk, regime, m1, m2, m3, cmp){
 // today), or המתנה (nothing active) — each with the concrete point-to-point price range. All the
 // underlying calculations (Minds, risk engine, P%, regime, pivots) still run in the background and
 // still populate the (hidden) detailed cards — this only simplifies what's actually shown.
+// Minimum account balance needed so a forced (margin-call) closure doesn't happen BEFORE the
+// price actually reaches our own stop-loss — i.e., the account can absorb the full worst-case
+// floating loss down to the stop (support/resistance-based, same rule real entries use) without
+// the broker liquidating us early. Reuses forcedClosureInfo/profitLossStats — same formulas used
+// everywhere else in the app, nothing new invented here.
+function computeCapitalSectionHtml(entry, stop, dirUp, isEstimate){
+  if(entry==null || stop==null) return '';
+  const oz = settings.posSize || 1;
+  if(!lastUsdIls){
+    return `<div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:var(--text-dim);">ממתינה לשער דולר-שקל כדי לחשב יתרה נדרשת</div>`;
+  }
+  // Target is only needed to feed profitLossStats' financing-duration estimate — computed with the
+  // exact same rule real live entries use, so the whole scenario stays internally consistent.
+  const stopDist = Math.abs(entry-stop);
+  let targetDist = dirUp
+    ? (lastResistance && lastResistance>entry && (lastResistance-entry)<=lastAtr*settings.maxZoneAtrMult ? lastResistance-entry : stopDist*settings.minRewardRiskMult)
+    : (lastSupport && lastSupport<entry && (entry-lastSupport)<=lastAtr*settings.maxZoneAtrMult ? entry-lastSupport : stopDist*settings.minRewardRiskMult);
+  if(targetDist < stopDist*settings.minRewardRiskMult) targetDist = stopDist*settings.minRewardRiskMult;
+  const target = dirUp ? entry+targetDist : entry-targetDist;
+
+  const fc = forcedClosureInfo(entry, target, stop, dirUp, oz);
+  if(!fc) return '';
+  const pl = profitLossStats(entry, target, stop, dirUp, oz);
+  const b = pl.breakdown;
+  // "Core" required balance = margin (to keep the position open at all) + the RAW price-distance
+  // loss to the stop + spread/commission — this is what you need if the stop gets hit reasonably
+  // soon. The estimated financing-over-the-whole-holding-period (which can be many months on a
+  // monthly system) is shown SEPARATELY as an optional extra buffer, not bundled into the headline
+  // number — bundling it made the total look wildly disproportionate to the actual stop-loss risk.
+  const coreRequiredIls = b.marginIls + b.grossLossIls + b.spreadIls + b.commissionIls;
+  const financingBufferIls = Math.abs(b.financingIls);
+  const nights = pl.timeInfo ? pl.timeInfo.chargedNights : 0;
+  const estNote = isEstimate ? `<div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">הערכה לפי המצב הנוכחי (תמיכה/התנגדות + ATR) — תתעדכן ברגע שתיפתח כניסה בפועל</div>` : '';
+
+  return `<div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">` +
+    estNote +
+    `<div style="font-size:13px;">כניסה: <b style="font-family:var(--mono);">${fmt(entry)}</b> ← סטופ: <b style="font-family:var(--mono); color:var(--down);">${fmt(stop)}</b> (הפסד גולמי: ₪${fmt(b.grossLossIls,0)})</div>` +
+    `<div style="font-size:12px; color:var(--text-dim); margin-top:6px;">יתרה מינימלית כדי שלא להיסגר בכפייה לפני שהמחיר מגיע לסטופ (${oz} אונקיות):</div>` +
+    `<div style="font-size:18px; font-weight:700; color:var(--gold); margin-top:2px;">₪${fmt(coreRequiredIls,0)}</div>` +
+    `<div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">בטחונות: ₪${fmt(b.marginIls,0)} + הפסד גולמי לסטופ: ₪${fmt(b.grossLossIls,0)} + מרווח/עמלה: ₪${fmt(b.spreadIls+b.commissionIls,0)}</div>` +
+    (nights>2 ? `<div style="font-size:11px; color:var(--text-dim); margin-top:8px;">➕ אם הפוזיציה תוחזק לכל משך הזמן המשוער עד היעד/סטופ (~${nights} לילות מימון), תתווסף עלות מימון מצטברת של עד ₪${fmt(financingBufferIls,0)} — כדאי להוסיף כרית ביטחון בהתאם אם מתכוונים להחזיק לטווח כזה.</div>` : '') +
+    `<div style="font-size:10.5px; color:var(--text-dim); margin-top:8px;">מרווח דינמי: $${fmt(settings.spreadCost,2)} · עלות פוזיציה (ספרד, ${oz} אונקיות): $${fmt(settings.spreadCost*oz,2)} · בטחונות: $${fmt(pl.marginUsd,2)}</div>` +
+    `</div>`;
+}
+
+// Statistical monthly forecast: instead of a generic technical target, this looks at how far gold
+// has ACTUALLY moved historically within a month (from that month's open to its high, for LONG —
+// or to its low, for SHORT), across all closed monthly candles we have. That average/median move
+// becomes "the monthly target." Then builds a full P&L statement from entry to that target: gross
+// expected move, minus spread, minus commission, minus overnight financing for the nights actually
+// remaining in THIS calendar month (not a generic ATR-based holding estimate) — and separately, the
+// loss side if the stop is hit instead, plus a probability-weighted expectation using the system's
+// own existing P% (from matchStats), when available.
+function computeMonthlyExcursionStats(dirUp){
+  if(!historyCache || historyCache.opens.length < 6) return null;
+  const {opens, highs, lows} = historyCache;
+  const pctMoves = [];
+  for(let i=0;i<opens.length;i++){
+    if(!opens[i] || opens[i]<=0) continue;
+    const pct = dirUp ? (highs[i]-opens[i])/opens[i]*100 : (opens[i]-lows[i])/opens[i]*100;
+    if(pct>=0) pctMoves.push(pct);
+  }
+  if(pctMoves.length<6) return null;
+  const sorted = pctMoves.slice().sort((a,b)=>a-b);
+  const mean = pctMoves.reduce((a,b)=>a+b,0)/pctMoves.length;
+  const median = sorted[Math.floor(sorted.length/2)];
+  return { mean, median, count: pctMoves.length };
+}
+
+function daysRemainingInMonth(){
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  return Math.max(1, lastDay - now.getDate() + 1);
+}
+
+function computeMonthlyForecastHtml(entry, stop, dirUp, isEstimate){
+  if(entry==null) return '<div class="msg">ממתינה לנתונים...</div>';
+  const stats = computeMonthlyExcursionStats(dirUp);
+  if(!stats) return '<div class="msg">אוספת עדיין מספיק חודשים היסטוריים לסטטיסטיקה (צריך לפחות 6 חודשים סגורים).</div>';
+
+  const oz = settings.posSize || 1;
+  const movePct = stats.mean; // average historical move from month-open to the extreme, in trade direction
+  const monthlyTarget = dirUp ? entry*(1+movePct/100) : entry*(1-movePct/100);
+  const nights = daysRemainingInMonth();
+
+  const grossProfitUsd = entry*(movePct/100)*oz;
+  const spreadCostUsd = settings.spreadCost*oz;
+  const commissionUsd = settings.commissionPerTrade;
+  const overnightPct = dirUp ? settings.overnightBuyPct : settings.overnightSellPct;
+  const financingUsd = entry*(overnightPct/100)*oz*nights; // signed, typically negative (cost)
+  const netProfitUsd = grossProfitUsd - spreadCostUsd - commissionUsd + financingUsd;
+
+  const usdIls = lastUsdIls || 0;
+  const toIls = v => usdIls ? v*usdIls : null;
+
+  let lossHtml = '';
+  let evHtml = '';
+  if(stop!=null){
+    const riskPct = Math.abs(stop-entry)/entry*100;
+    const grossLossUsd = entry*(riskPct/100)*oz;
+    // Same nights-remaining-in-month basis, for consistency — a simplification: the stop could in
+    // reality be hit sooner or later than the target.
+    const netLossUsd = grossLossUsd + spreadCostUsd + commissionUsd - financingUsd;
+    const netProfitIls = toIls(netProfitUsd), netLossIls = toIls(netLossUsd);
+    lossHtml = `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+      <div style="color:var(--text-dim); font-size:12px;">לעומת זאת, אם הסטופ ייפגע (${fmt(stop)}):</div>
+      <div style="color:var(--down); font-weight:700;">הפסד נטו משוער: ${netLossIls!=null?'₪'+fmt(netLossIls,0):'$'+fmt(netLossUsd,2)}</div>
+    </div>`;
+
+    // Probability-weighted expectation, using the system's OWN existing P% when it's available and
+    // matches this direction — not a new invented number.
+    if(lastR0 && lastR0.enough && lastR0.dir===(dirUp?'up':'down') && lastR0.prob!=null && netProfitIls!=null && netLossIls!=null){
+      const p = lastR0.prob/100;
+      const evIls = p*netProfitIls - (1-p)*netLossIls;
+      evHtml = `<div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border);">
+        <div style="font-size:12px; color:var(--text-dim);">תוחלת משוקללת (לפי P%=${fmt(lastR0.prob,0)}% של המערכת):</div>
+        <div style="font-weight:700; font-size:15px; color:${evIls>=0?'var(--up)':'var(--down)'};">${evIls>=0?'+':''}₪${fmt(evIls,0)}</div>
+      </div>`;
+    }
+  }
+
+  const netProfitIls = toIls(netProfitUsd);
+  const estNote = isEstimate ? `<div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">הערכה לפי הכיוון הנוכחי — תתעדכן עם כניסה בפועל</div>` : '';
+
+  return `${estNote}` +
+    `<div>יעד חודשי סטטיסטי (${dirUp?'LONG':'SHORT'}): <b style="font-family:var(--mono); color:${dirUp?'var(--up)':'var(--down)'};">${fmt(monthlyTarget)}</b> (${fmt(movePct,2)}% מהכניסה)</div>` +
+    `<div style="font-size:11.5px; color:var(--text-dim); margin-top:2px;">מבוסס על ממוצע התנועה בפועל מפתיחת חודש עד ${dirUp?'השיא':'השפל'} שלו, על פני ${stats.count} חודשים היסטוריים (חציון: ${fmt(stats.median,2)}%)</div>` +
+    `<div style="margin-top:10px;">רווח גולמי צפוי: <b>${'$'+fmt(grossProfitUsd,2)}</b></div>` +
+    `<div style="color:var(--text-dim); font-size:12.5px;">− מרווח דינמי (ספרד): $${fmt(spreadCostUsd,2)}</div>` +
+    `<div style="color:var(--text-dim); font-size:12.5px;">− עמלה: $${fmt(commissionUsd,2)}</div>` +
+    `<div style="color:var(--text-dim); font-size:12.5px;">${financingUsd>=0?'+':'−'} מימון לילה (${nights} לילות עד סוף החודש): $${fmt(Math.abs(financingUsd),2)}</div>` +
+    `<div style="margin-top:6px; font-weight:700; color:var(--up); font-size:15px;">רווח נטו משוער ביעד: ${netProfitIls!=null?'₪'+fmt(netProfitIls,0):'$'+fmt(netProfitUsd,2)}</div>` +
+    lossHtml + evHtml;
+}
+
+function renderMonthlyForecastCard(){
+  const el = document.getElementById('monthlyForecastContent');
+  if(!el) return;
+  if(lastKnownClose==null){ el.innerHTML = '<div class="msg">טוענת...</div>'; return; }
+  const pos = loadPosState();
+
+  if(pos && pos.open){
+    // Already committed to a direction — show only that real scenario, clearly labeled.
+    const dirLabel = pos.dir==='up' ? '🟢 יעד חודשי אם LONG (הפוזיציה הפתוחה שלך)' : '🔴 יעד חודשי אם SHORT (הפוזיציה הפתוחה שלך)';
+    el.innerHTML = `<div style="font-weight:700; margin-bottom:4px;">${dirLabel}</div>` +
+      computeMonthlyForecastHtml(pos.entry, pos.risk, pos.dir==='up', false);
+    return;
+  }
+
+  // No committed position — show BOTH directions side by side so it's clear which target belongs
+  // to which scenario, instead of only guessing the currently-favored one.
+  const entry = lastKnownClose;
+  const stopUp = lastSupport!=null ? lastSupport : (lastAtr!=null ? entry-lastAtr*settings.atrStopMult : null);
+  const stopDown = lastResistance!=null ? lastResistance : (lastAtr!=null ? entry+lastAtr*settings.atrStopMult : null);
+
+  el.innerHTML =
+    `<div style="border:1px solid rgba(63,182,139,.3); border-radius:8px; padding:10px; margin-bottom:10px;">` +
+      `<div style="font-weight:700; color:var(--up); margin-bottom:4px;">🟢 יעד חודשי אם קונים (LONG)</div>` +
+      computeMonthlyForecastHtml(entry, stopUp, true, true) +
+    `</div>` +
+    `<div style="border:1px solid rgba(226,96,79,.3); border-radius:8px; padding:10px;">` +
+      `<div style="font-weight:700; color:var(--down); margin-bottom:4px;">🔴 יעד חודשי אם עושים שורט (SHORT)</div>` +
+      computeMonthlyForecastHtml(entry, stopDown, false, true) +
+    `</div>` +
+    `<div style="font-size:11px; color:var(--text-dim); margin-top:10px;">שני התרחישים מוצגים כדי להבהיר את היעד בכל כיוון - זה לא אומר שהמערכת ממליצה על שניהם; היא תיכנס בפועל רק לכיוון אחד כשתתקבל פריצה מאושרת.</div>`;
+}
+
 function renderActionCard(){
   const statusEl = document.getElementById('actionStatus');
   const rangeEl = document.getElementById('actionRange');
@@ -899,7 +1083,7 @@ function renderActionCard(){
   const pos = loadPosState();
   const cur = lastKnownClose;
 
-  // 1) כניסה — פוזיציה פתוחה כרגע (בין אם נפתחה הרגע ובין אם ממשיכה מיום קודם).
+  // 1) כניסה — פוזיציה פתוחה כרגע (בין אם נפתחה הרגע ובין אם ממשיכה מחודש קודם).
   if(pos && pos.open){
     const dirLabel = pos.dir==='up' ? '🟢 כניסה (LONG)' : '🔴 כניסה (SHORT)';
     statusEl.innerHTML = dirLabel;
@@ -908,15 +1092,18 @@ function renderActionCard(){
       `<div>כניסה: <b style="font-family:var(--mono);">${fmt(pos.entry)}</b></div>` +
       `<div>יעד: <b style="font-family:var(--mono); color:var(--up);">${fmt(pos.target)}</b></div>` +
       `<div>סטופ: <b style="font-family:var(--mono); color:var(--down);">${fmt(pos.risk)}</b></div>` +
-      `<div style="margin-top:6px; color:var(--text-dim); font-size:12px;">מחיר נוכחי: ${fmt(cur)}</div>`;
+      `<div style="margin-top:6px; color:var(--text-dim); font-size:12px;">מחיר נוכחי: ${fmt(cur)}</div>` +
+      computeCapitalSectionHtml(pos.entry, pos.risk, pos.dir==='up', false);
     return;
   }
 
-  // 2) יציאה — נסגרה עסקה היום (אחרי שהייתה פתוחה).
+  // 2) יציאה — נסגרה עסקה החודש (אחרי שהייתה פתוחה). נבדק לפי חודש קלנדרי ולא "היום", כי במערכת
+  // חודשית לא בטוח שנכנסים כל יום.
   const log = loadTradeLog().filter(t=>t.closedAt!=null).sort((a,b)=>b.closedAt-a.closedAt);
   const last = log[0];
-  const todayStr = new Date().toDateString();
-  if(last && new Date(last.closedAt).toDateString()===todayStr){
+  const now = new Date();
+  const sameMonth = last && new Date(last.closedAt).getFullYear()===now.getFullYear() && new Date(last.closedAt).getMonth()===now.getMonth();
+  if(sameMonth){
     const outcomeLabel = last.outcome==='tp' ? '✅ יעד הושג' : last.outcome==='sl' ? '🛑 סטופ נפגע' : '🔄 היפוך מגמה';
     const exitPrice = last.outcome==='tp' ? last.target : (last.outcome==='sl' ? last.risk : cur);
     statusEl.innerHTML = `⚪ יציאה — ${outcomeLabel}`;
@@ -924,7 +1111,8 @@ function renderActionCard(){
     rangeEl.innerHTML =
       `<div>כניסה: <b style="font-family:var(--mono);">${fmt(last.entry)}</b></div>` +
       `<div>יציאה: <b style="font-family:var(--mono);">${fmt(exitPrice)}</b></div>` +
-      `<div style="margin-top:6px; color:${last.actualPct>=0?'var(--up)':'var(--down)'};">תוצאה: ${last.actualPct!=null?(last.actualPct>=0?'+':'')+fmt(last.actualPct,2)+'%':'-'}</div>`;
+      `<div style="margin-top:6px; color:${last.actualPct>=0?'var(--up)':'var(--down)'};">תוצאה: ${last.actualPct!=null?(last.actualPct>=0?'+':'')+fmt(last.actualPct,2)+'%':'-'}</div>` +
+      computeCapitalSectionHtml(last.entry, last.risk, last.entryDir==='up', false);
     return;
   }
 
@@ -949,9 +1137,13 @@ function renderActionCard(){
       rangeHtml += `<div style="margin-top:6px; color:var(--text-dim);">אין עדיין טווח ברור לצפייה</div>`;
     }
   } else {
-    rangeHtml += `<div style="margin-top:6px; color:var(--text-dim);">אוספת עדיין מספיק היסטוריה על נר יומי</div>`;
+    rangeHtml += `<div style="margin-top:6px; color:var(--text-dim);">אוספת עדיין מספיק היסטוריה על נר חודשי</div>`;
   }
-  rangeEl.innerHTML = rangeHtml;
+  const scoreDirUp = lastCombinedScore!=null ? lastCombinedScore>=0 : true;
+  const estStop = scoreDirUp
+    ? (lastSupport!=null ? lastSupport : (lastAtr!=null ? cur-lastAtr*settings.atrStopMult : null))
+    : (lastResistance!=null ? lastResistance : (lastAtr!=null ? cur+lastAtr*settings.atrStopMult : null));
+  rangeEl.innerHTML = rangeHtml + computeCapitalSectionHtml(cur, estStop, scoreDirUp, true);
 }
 
 function renderRiskEngineCard(){
@@ -1114,9 +1306,9 @@ function runHistoricalBacktest(){
       if(outcome){
         const actualPct = openPos.dir==='up' ? (exitPrice-openPos.entry)/openPos.entry*100 : (openPos.entry-exitPrice)/openPos.entry*100;
         const spreadPct = (settings.spreadCost/openPos.entry)*100; // real, known cost
-        const daysHeld = Math.max(1, i-openPos.entryIdx);
+        const monthsHeld = Math.max(1, i-openPos.entryIdx);
         const ratePct = openPos.dir==='up' ? settings.overnightBuyPct : settings.overnightSellPct;
-        const financingPct = ratePct * daysHeld; // real overnight financing, charged per night actually held (1 candle = 1 night here)
+        const financingPct = ratePct * (monthsHeld*30.4); // real overnight financing, charged per night actually held (1 candle ≈ 30.4 nights here)
         const netPct = actualPct - spreadPct + financingPct;
         // how far toward the target did price actually get, as % of the total target distance?
         const totalDist = Math.abs(openPos.target-openPos.entry);
@@ -1258,7 +1450,7 @@ function computeTrendEpisodes(){
   if(log.length===0) return [];
   const episodes = [];
   let current = null;
-  const GAP_MS = 3*24*3600*1000; // treat a 3+ day gap as a new episode even if same direction (was 3 weekly candles, now 3 daily candles)
+  const GAP_MS = 3*30.4*24*3600*1000; // treat a 3+ month gap as a new episode even if same direction (was 3 daily candles, now 3 monthly candles)
   for(const t of log){
     if(!current || current.dir!==t.entryDir || (t.openedAt-current.lastCloseAt)>GAP_MS){
       if(current) episodes.push(current);
@@ -1371,8 +1563,8 @@ function getCalibratedWeights(){
 function estimateTimeToTarget(entry, target){
   if(!lastAtr || lastAtr<=0) return null;
   const dist = Math.abs(target-entry);
-  const estCandles = dist / lastAtr; // rough: ATR = average movement per daily candle
-  const estHours = estCandles * 24; // 24 hours per daily candle
+  const estCandles = dist / lastAtr; // rough: ATR = average movement per monthly candle
+  const estHours = estCandles * 730; // ~730 hours per monthly candle (365.25/12 days average)
   const chargedNights = Math.ceil(estHours/24); // one financing charge per night held, no special multiplier
   return {estCandles, estHours, chargedNights};
 }
@@ -1752,7 +1944,7 @@ function renderThreeMindsCard(){
       <div style="font-weight:700; color:var(--gold); margin-bottom:4px;">🏦 מוח 3 — Broker Simulator (איכות ביצוע: ${m3.score}/100)</div>
       ${reasonsHtml}
     </div>
-    <div style="font-size:11px; color:var(--text-dim); margin-top:10px;">⚠️ מנוע הסתברות זה מבוסס על דמיון היסטורי בין נרות יומיים, מדגם מוגבל - לא הוכח בבקטסט מקיף.</div>
+    <div style="font-size:11px; color:var(--text-dim); margin-top:10px;">⚠️ מנוע הסתברות זה מבוסס על דמיון היסטורי בין נרות חודשיים, מדגם מוגבל - לא הוכח בבקטסט מקיף.</div>
     <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:10px;">${calibHtml}</div>
   `;
 }
@@ -1905,7 +2097,7 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
       const isConsolBreakout = isConsolBreakoutForLog;
       const isChannelBreakout = isChannelBreakoutForLog;
       const dirLabel = entryDir==='up' ? '🟢 LONG (קנייה) — פריצה' : '🔴 SHORT (מכירה) — פריצה';
-      const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות יומיים`
+      const sourceLabel = isConsolBreakout ? `פריצה מטווח דשדוש של ${lookback} נרות חודשיים`
         : isChannelBreakout ? `פריצת ערוץ מגמה (קו מגמה אלכסוני)`
         : isStructBreakoutForLog ? `שבירת מבנה שוק (CHoCH)`
         : `המשך מגמה אחרי תיקון קל`;
@@ -1934,7 +2126,7 @@ function monitorPosition(legDir, mainAgrees, lastClose, r0){
     `<span style="color:var(--gold)">יעד: ${fmt(pos.target)} | סטופ: ${fmt(pos.risk)}</span><br>` +
     `<span style="color:var(--text-dim);">מחיר נוכחי: ${fmt(lastClose)}</span><br>` +
     plLine(pos.entry, pos.target, pos.risk, pos.dir==='up') + `<br>` +
-    `<span style="color:var(--text-dim); font-size:12px;">⚠️ הסטופ מאושר רק כשנר יומי שלם נסגר מעבר לו - לא לפי תנודה רגעית, כדי למנוע יציאה מוקדמת מרעש. היעד כן יכול להיסגר על המחיר החי מיד כשהוא מגיע.</span><br>` +
+    `<span style="color:var(--text-dim); font-size:12px;">⚠️ הסטופ מאושר רק כשנר חודשי שלם נסגר מעבר לו - לא לפי תנודה רגעית, כדי למנוע יציאה מוקדמת מרעש. היעד כן יכול להיסגר על המחיר החי מיד כשהוא מגיע.</span><br>` +
     `<span style="color:var(--text-dim); font-size:13px;">${probLine}</span>`;
   earlyCard.style.display = 'block';
 
@@ -2078,11 +2270,11 @@ function renderPivotCard(){
   if(!content) return;
   const piv = computeCamarillaPivots();
   if(!piv || lastKnownClose==null){
-    content.innerHTML = `<div class="msg">ממתין לנתוני הנר היומי הסגור האחרון...</div>`;
+    content.innerHTML = `<div class="msg">ממתין לנתוני הנר החודשי הסגור האחרון...</div>`;
     return;
   }
   const cur = lastKnownClose;
-  let html = `<div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">מבוסס על טווח (High/Low/Close) של הנר היומי הסגור האחרון — לא דורש נתוני תוך-יום. הכי אמין בימים ללא פריצת מגמה חזקה.</div>`;
+  let html = `<div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">מבוסס על טווח (High/Low/Close) של הנר החודשי הסגור האחרון — לא דורש נתוני תוך-חודש. הכי אמין בחודשים ללא פריצת מגמה חזקה.</div>`;
 
   // Upward ladder (LONG now → each Camarilla level is a likely reversal point → take profit,
   // consider a fresh entry, repeat — until the final target).
@@ -2123,7 +2315,7 @@ function renderPivotCard(){
     <div class="lbl">🔻 יעד S4 (${fmt(piv.S4,2)}) - סולם כניסה/יציאה בירידות</div>
     ${renderLadder(downSteps, 'var(--down)')}
   </div>`;
-  html += `<div style="font-size:11px; color:var(--text-dim); margin-top:10px;">כל "היפוך מגמה" הוא נקודה שבה סטטיסטית סביר שהמחיר יתהפך — לא ודאות. אם רמה נשברת בלי היפוך, זה סימן ליום מגמה חזקה, לא דשדוש, ואפשר להמשיך להחזיק במקום לצאת.</div>`;
+  html += `<div style="font-size:11px; color:var(--text-dim); margin-top:10px;">כל "היפוך מגמה" הוא נקודה שבה סטטיסטית סביר שהמחיר יתהפך — לא ודאות. אם רמה נשברת בלי היפוך, זה סימן לחודש מגמה חזקה, לא דשדוש, ואפשר להמשיך להחזיק במקום לצאת.</div>`;
   content.innerHTML = html;
 }
 
@@ -2190,11 +2382,11 @@ function runRiskCrashEngine(){
 }
 
 function computeDailyTrend(){
-  // Multi-Timeframe confirmation disabled in the daily version: the main candles ARE the daily
-  // bars now, so there's no independent lower timeframe fetched to compare against (comparing
-  // daily-vs-daily would be circular, not a genuine second opinion). Kept as a no-op returning
-  // null so every caller's existing null-check gracefully skips this signal.
-  return null;
+  if(!historyCache || !historyCache.dailyCloses || historyCache.dailyCloses.length < 20) return null;
+  const dc = historyCache.dailyCloses;
+  const sma20 = dc.slice(-20).reduce((a,b)=>a+b,0) / 20;
+  const lastDaily = dc[dc.length-1];
+  return { dir: lastDaily >= sma20 ? 'up' : 'down', lastDaily, sma20 };
 }
 
 // Milestone ladder — asymmetric: early breakeven protection, wider room in the middle, and a
@@ -2576,8 +2768,8 @@ function renderChangeStats(data, lastClose, st, currentScore){
     const remainingRisk = Math.abs(lastClose - barRisk);
     const probFavor = st.probUp!=null ? (barDirUp ? st.probUp/100 : (100-st.probUp)/100) : 0.5;
     const ratePct = barDirUp ? settings.overnightBuyPct : settings.overnightSellPct; // typically negative
-    const nightlyFinancing = lastClose*(ratePct/100)*1; // signed — a further night of holding cost (1 candle = 1 night here)
-    const expectedValue = remainingReward*probFavor - remainingRisk*(1-probFavor) + nightlyFinancing;
+    const monthlyFinancing = lastClose*(ratePct/100)*30.4; // signed — a further month of holding cost (1 candle ≈ 30.4 nights here)
+    const expectedValue = remainingReward*probFavor - remainingRisk*(1-probFavor) + monthlyFinancing;
     const totalRange = remainingReward + remainingRisk || 1;
     const worthPct = Math.max(-100, Math.min(100, (expectedValue/totalRange)*100));
     const barPos = (worthPct+100)/2;
@@ -2818,7 +3010,7 @@ function drawMiniChart(data, livePrice, count=30){
     ctx.fillText(livePrice.toFixed(2), leftPad-5, y+3);
   }
   ctx.fillStyle = '#9BA0AE'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
-  ctx.fillText('נר מקווקו = הנר היומי הפתוח כרגע', leftPad, H-4);
+  ctx.fillText('נר מקווקו = הנר החודשי הפתוח כרגע', leftPad, H-4);
 }
 
 function renderSimpleMessage(r0, lastClose){
@@ -2877,7 +3069,7 @@ function renderSimpleMessage(r0, lastClose){
         }
       }
     } else if(!r0.enough){
-      simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר יומי`;
+      simpleHtml += `⚪ אוספת עדיין מספיק היסטוריה על נר חודשי`;
     } else {
       simpleHtml += `⚪ כרגע אין הסתברות כניסה`;
     }
@@ -3057,7 +3249,7 @@ function readSettingsForm(){
   settings.maintPct = parseFloat(document.getElementById('maintPct').value)||0.33;
   settings.riskPercentPerTrade = parseFloat(document.getElementById('riskPercentPerTrade').value)||1;
   settings.scoreThreshold = parseFloat(document.getElementById('scoreThreshold').value)||4;
-  settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||10;
+  settings.consolidationLookback = parseInt(document.getElementById('consolidationLookback').value)||6;
   settings.consolidationMaxRangeAtrMult = parseFloat(document.getElementById('consolidationMaxRangeAtrMult').value)||2.0;
   settings.breakoutBufferAtrMult = parseFloat(document.getElementById('breakoutBufferAtrMult').value)||0.2;
   settings.requireCloseBreakout = document.getElementById('requireCloseBreakout').checked;
@@ -3065,7 +3257,7 @@ function readSettingsForm(){
   settings.volumeConfirmMult = parseFloat(document.getElementById('volumeConfirmMult').value)||1.5;
   settings.srProximityPts = parseFloat(document.getElementById('srProximityPts').value)||3;
   settings.atrStopMult = parseFloat(document.getElementById('atrStopMult').value)||1.0;
-  settings.maxZoneAtrMult = parseFloat(document.getElementById('maxZoneAtrMult').value)||4;
+  settings.maxZoneAtrMult = parseFloat(document.getElementById('maxZoneAtrMult').value)||10;
   settings.minRewardRiskMult = parseFloat(document.getElementById('minRewardRiskMult').value)||2.5;
   settings.channelStopCapAtrMult = parseFloat(document.getElementById('channelStopCapAtrMult').value)||3.0;
   settings.accelerationRsiCap = parseFloat(document.getElementById('accelerationRsiCap').value)||70;
@@ -3191,7 +3383,7 @@ async function refreshAll(){
     lastUsdIls = usdIls;
     const {closes, highs, lows, opens} = historyCache;
     if(closes.length < settings.maxSamples + settings.minSamples){
-      renderBanner(`אין עדיין מספיק נתוני היסטוריה (בנרות יומיים) - יש ${closes.length} מתוך ${settings.maxSamples+settings.minSamples} נדרשים. ה-P% עשוי להראות "אוסף נתונים" עד שיצטבר מספיק.`, 'warn');
+      renderBanner(`אין עדיין מספיק נתוני היסטוריה (בנרות חודשיים) - יש ${closes.length} מתוך ${settings.maxSamples+settings.minSamples} נדרשים. ה-P% עשוי להראות "אוסף נתונים" עד שיצטבר מספיק.`, 'warn');
     }
     const {scores, lastResistance:lr, lastSupport:ls, atrArr, ema200Last, ema50Last, rsiLast} = computeScores(historyCache);
     lastScoresArr = scores;
@@ -3225,6 +3417,7 @@ async function refreshAll(){
     renderRiskEngineCard();
     renderPivotCard();
     renderActionCard();
+    renderMonthlyForecastCard();
     renderSelfControlCard();
 
 
@@ -3305,7 +3498,7 @@ document.getElementById('runBacktestBtn').addEventListener('click', ()=>{
       return;
     }
     if(bt.tradeCount===0){
-      content.innerHTML = `<span style="color:var(--text-dim);">בדקנו ${bt.count} נרות יומיים - המערכת המלאה (כולל 3 המוחות ומנוע הסיכון) לא הייתה נכנסת לאף עסקה בכל התקופה הזו</span>`;
+      content.innerHTML = `<span style="color:var(--text-dim);">בדקנו ${bt.count} נרות חודשיים - המערכת המלאה (כולל 3 המוחות ומנוע הסיכון) לא הייתה נכנסת לאף עסקה בכל התקופה הזו</span>`;
       return;
     }
     const winRate = (bt.wins/bt.tradeCount)*100;
@@ -3341,9 +3534,9 @@ document.getElementById('runBacktestBtn').addEventListener('click', ()=>{
         }
       }
       const progressNote = t.outcome!=='tp' ? `<br><span style="color:var(--text-dim); font-size:11px;">הגיע ל-${fmt(t.pctOfTargetReached,0)}% מהדרך ליעד לפני שנכשל (כניסה: ${fmt(t.entry)} | יעד: ${fmt(t.target)} | סטופ מקורי: ${fmt(t.risk)})</span>${ladderNote}` : '';
-      const durationDays = t.exitIdx - t.entryIdx;
+      const durationMonths = t.exitIdx - t.entryIdx;
       tradesHtml += `<div style="border-top:1px solid var(--border); padding-top:6px; margin-top:6px; font-size:12px;">` +
-        `<b>מגמה ${idx+1} - ${durationDays} נרות:</b> ${t.dir==='up'?'🟢 LONG':'🔴 SHORT'} | ${regimeLabel}${channelNote} | יום #${t.entryIdx} ← יום #${t.exitIdx} | ${outcomeLabel} | ${netBadge}<br>` +
+        `<b>מגמה ${idx+1} - ${durationMonths} נרות:</b> ${t.dir==='up'?'🟢 LONG':'🔴 SHORT'} | ${regimeLabel}${channelNote} | חודש #${t.entryIdx} ← חודש #${t.exitIdx} | ${outcomeLabel} | ${netBadge}<br>` +
         `רווח/הפסד נטו: <b style="color:${color};">${t.pctNet>=0?'+':''}${fmt(t.pctNet,2)}%</b> <span style="color:var(--text-dim);">(גולמי: ${t.pctGross>=0?'+':''}${fmt(t.pctGross,2)}%)</span><br>` +
         `<span style="color:var(--text-dim); font-size:11px;">מרווח דינמי: -${fmt(spreadOfGross,1)}% מהגולמי | מימון לילה: ${t.financingPct>=0?'+':'-'}${fmt(financingOfGross,1)}% מהגולמי</span>` +
         progressNote +
@@ -3353,10 +3546,10 @@ document.getElementById('runBacktestBtn').addEventListener('click', ()=>{
     const occupiedCount = bt.consolOpportunities.filter(o=>o.occupied).length;
     const freeCount = bt.consolOpportunities.length - occupiedCount;
     const consolNote = bt.consolOpportunities.length
-      ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; border-top:1px solid var(--border); padding-top:6px;">איתותי דשדוש גולמיים שנמצאו: ${bt.consolOpportunities.length} | תפוסים ע"י עסקה קיימת: ${occupiedCount} | פנויים ולא נפתחו: ${freeCount}<br>ימים פנויים: ${bt.consolOpportunities.filter(o=>!o.occupied).map(o=>'#'+o.week).join(', ')||'-'}</div>`
+      ? `<div style="font-size:11px; color:var(--text-dim); margin-top:6px; border-top:1px solid var(--border); padding-top:6px;">איתותי דשדוש גולמיים שנמצאו: ${bt.consolOpportunities.length} | תפוסים ע"י עסקה קיימת: ${occupiedCount} | פנויים ולא נפתחו: ${freeCount}<br>חודשים פנויים: ${bt.consolOpportunities.filter(o=>!o.occupied).map(o=>'#'+o.week).join(', ')||'-'}</div>`
       : '';
     content.innerHTML = `
-      <div style="font-size:13px;">נבדקו ${bt.count} נרות יומיים | ${bt.tradeCount} עסקאות (המערכת המלאה, כולל 3 מוחות ומנוע סיכון) נמצאו</div>
+      <div style="font-size:13px;">נבדקו ${bt.count} נרות חודשיים | ${bt.tradeCount} עסקאות (המערכת המלאה, כולל 3 מוחות ומנוע סיכון) נמצאו</div>
       <div style="font-size:13px; margin-top:4px;">רווחיות (נטו): ${bt.wins} | הפסדיות (נטו): ${bt.losses} | אחוז רווחיות בפועל: ${fmt(winRate,0)}%</div>
       <div style="font-size:10px; color:var(--text-dim);">"רווחיות" = נטו חיובי בפועל, לא רק "הגיע ליעד" - בזכות סטופ המדרגות, גם עסקת "סטופ" יכולה להיות רווחית</div>
       ${consolNote}
